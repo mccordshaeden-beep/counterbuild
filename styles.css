@@ -45,6 +45,9 @@ a { color: var(--brass); }
 .brand { display: flex; align-items: center; gap: 10px; }
 .mark { width: 22px; height: 22px; transform: rotate(45deg); border: 2px solid var(--brass); box-shadow: inset 0 0 0 3px var(--bg), inset 0 0 0 6px var(--brass); }
 h1 { font: 800 30px/1 var(--display); letter-spacing: .04em; text-transform: uppercase; margin: 0; }
+.filters { display: flex; gap: 8px 14px; flex-wrap: wrap; }
+.filter-note { flex-basis: 100%; margin: 0; color: var(--muted); font-size: 12px; text-align: right; }
+select:disabled { opacity: .5; }
 .rank { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 13px; }
 select, input {
   background: var(--raise); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; min-width: 0;

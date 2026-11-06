@@ -24,6 +24,7 @@ const state = {
   tagOverrides: store.get('tags', {}), // heroId -> [tags]
   mode: 'me',
   rank: store.get('rank', 'all'),
+  matchMode: store.get('matchMode', 'Ranked,Unranked'),
   stats: new Map(),           // cache key -> item stats array
   counters: new Map(),        // rank -> counter rows
   filter: '',
@@ -89,15 +90,20 @@ async function loadAssets() {
   }
 }
 
+// Unranked games have no rank badge, so a rank filter would silently drop all of them.
+// The rank filter only applies when looking at ranked games.
+const rankApplies = () => state.matchMode === 'Ranked' && state.rank !== 'all';
+const filterKey = () => `${state.matchMode}|${rankApplies() ? state.rank : 'all'}`;
+
 function rankQuery() {
   const since = Math.floor(Date.now() / 1000) - 30 * DAY;
-  let q = `game_mode=normal&min_unix_timestamp=${since}`;
-  if (state.rank !== 'all') q += `&min_average_badge=${state.rank}`;
+  let q = `game_mode=normal&match_mode=${encodeURIComponent(state.matchMode)}&min_unix_timestamp=${since}`;
+  if (rankApplies()) q += `&min_average_badge=${state.rank}`;
   return q;
 }
 
 async function loadItemStats(heroId) {
-  const key = `${heroId}|${state.rank}`;
+  const key = `${heroId}|${filterKey()}`;
   if (state.stats.has(key)) return state.stats.get(key);
   const v = await cached('is.' + key, 6, () => getJSON(`${API}/v1/analytics/item-stats?hero_id=${heroId}&${rankQuery()}`));
   state.stats.set(key, v);
@@ -105,9 +111,10 @@ async function loadItemStats(heroId) {
 }
 
 async function loadCounters() {
-  if (state.counters.has(state.rank)) return state.counters.get(state.rank);
-  const v = await cached('hc.' + state.rank, 12, () => getJSON(`${API}/v1/analytics/hero-counter-stats?${rankQuery()}`));
-  state.counters.set(state.rank, v);
+  const key = filterKey();
+  if (state.counters.has(key)) return state.counters.get(key);
+  const v = await cached('hc.' + key, 12, () => getJSON(`${API}/v1/analytics/hero-counter-stats?${rankQuery()}`));
+  state.counters.set(key, v);
   return v;
 }
 
@@ -223,7 +230,7 @@ async function renderBuild() {
     <div class="stage"><h3>${title}<small>${sub}</small></h3><ol class="items">${list.map(itemCard).join('')}</ol></div>` : '';
 
   el.innerHTML = (statsError ? `<p class="warn">Couldn't load item stats (${esc(statsError.message)}). Showing counter items only. Try again in a minute.</p>` : '')
-    + (!statsError && !build.hasStats ? `<p class="warn">No recent games for ${esc(me.name)} at this rank. Try "All ranks".</p>` : '')
+    + (!statsError && !build.hasStats ? `<p class="warn">No recent games for ${esc(me.name)} with these filters. Try Ranked + unranked.</p>` : '')
     + stage('Early', 'Tier 1 and 2 · lane', build.stages.early)
     + stage('Core', 'Tier 3 · mid game', build.stages.core)
     + stage('Late', 'Tier 4 · when you have the souls', build.stages.late)
@@ -315,11 +322,24 @@ async function findLiveMatch(ev) {
   }
 }
 
+function syncFilters() {
+  const ranked = state.matchMode === 'Ranked';
+  $('rank').disabled = !ranked;
+  const note = $('filter-note');
+  if (!ranked) {
+    note.hidden = false;
+    note.textContent = 'Unranked games have no rank, so all ranks are included. Pick Ranked to filter by rank.';
+  } else note.hidden = true;
+}
+
 // ---------- wiring ----------
 function wire() {
   $('steam').value = store.get('steam', '');
   $('rank').value = state.rank;
-  $('rank').addEventListener('change', (e) => { state.rank = e.target.value; store.set('rank', state.rank); renderBuild(); });
+  $('mode').value = state.matchMode;
+  $('rank').addEventListener('change', (e) => { state.rank = e.target.value; store.set('rank', state.rank); syncFilters(); renderBuild(); });
+  $('mode').addEventListener('change', (e) => { state.matchMode = e.target.value; store.set('matchMode', state.matchMode); syncFilters(); renderBuild(); });
+  syncFilters();
   $('live-form').addEventListener('submit', findLiveMatch);
   $('mode-me').addEventListener('click', () => setMode('me'));
   $('mode-enemy').addEventListener('click', () => setMode('enemy'));

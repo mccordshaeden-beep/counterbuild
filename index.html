@@ -21,8 +21,17 @@
     <span class="mark" aria-hidden="true"></span>
     <h1>Counterbuild</h1>
   </div>
+  <div class="filters">
   <label class="rank">
-    <span>Data from</span>
+    <span>Games</span>
+    <select id="mode">
+      <option value="Ranked,Unranked">Ranked + unranked</option>
+      <option value="Ranked">Ranked</option>
+      <option value="Unranked">Unranked</option>
+    </select>
+  </label>
+  <label class="rank">
+    <span>Rank</span>
     <select id="rank">
       <option value="all">All ranks</option>
       <option value="51">Ritualist+</option>
@@ -30,6 +39,8 @@
       <option value="111">Eternus</option>
     </select>
   </label>
+  </div>
+  <p class="filter-note" id="filter-note" hidden></p>
 </header>
 
 <main>
