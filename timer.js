@@ -140,7 +140,7 @@ function render() {
   const phase = [...PHASES].reverse().find((p) => now >= p.from) || PHASES[0];
   $('t-phase').innerHTML = `<h3>${esc(phase.title)}</h3><ul>${phase.tips.map((t) => `<li>${esc(t)}</li>`).join('')}</ul>`;
 
-  const list = occurrences(now).slice(0, 7);
+  const list = occurrences(now).slice(0, 5);
   $('t-next').innerHTML = list.map((o) => {
     const left = o.at - now;
     const state = left <= 0 ? 'now' : left <= PRE ? 'soon' : '';

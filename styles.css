@@ -38,7 +38,7 @@ button { cursor: pointer; }
 a { color: var(--brass); }
 
 .top {
-  max-width: 980px; margin: 0 auto;
+  max-width: 1280px; margin: 0 auto;
   padding-top: max(14px, env(safe-area-inset-top, 0px)); padding-bottom: 10px;
   display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
 }
@@ -53,15 +53,20 @@ select, input {
   background: var(--raise); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; min-width: 0;
 }
 
-main { max-width: 980px; margin: 0 auto; display: grid; gap: 14px; padding-bottom: 28px; }
+main { max-width: 1280px; margin: 0 auto; display: grid; gap: 14px; padding-bottom: 28px; }
+/* Phone: timer on top, build below. Wide screen: build left, timer pinned on the right. */
+.timer-col { order: -1; }
+.foot { grid-column: 1 / -1; }
+@media (min-width: 1000px) {
+  main { grid-template-columns: minmax(0, 1fr) 380px; align-items: start; }
+  .timer-col { order: 0; position: sticky; top: 12px; max-height: calc(100vh - 24px); overflow-y: auto; }
+  .timer-col .clock { font-size: 64px; }
+}
 .view { display: grid; gap: 14px; min-width: 0; }
 
-.tabs { max-width: 980px; margin: 0 auto 12px; display: flex; gap: 4px; border-bottom: 1px solid var(--line); }
-.tabs button { border: 0; background: none; padding: 10px 14px; font: 800 16px/1 var(--display); text-transform: uppercase; letter-spacing: .08em; color: var(--muted); border-bottom: 3px solid transparent; margin-bottom: -1px; }
-.tabs button[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--brass); }
 
 .clock-row { display: flex; align-items: center; gap: 12px 20px; flex-wrap: wrap; }
-.clock { font: 500 clamp(56px, 14vw, 96px)/1 var(--mono); font-variant-numeric: tabular-nums; color: var(--fg); letter-spacing: -.02em; }
+.clock { font: 500 clamp(52px, 13vw, 72px)/1 var(--mono); font-variant-numeric: tabular-nums; color: var(--fg); letter-spacing: -.02em; }
 .clock.idle { color: var(--muted); }
 .clock-btns { display: flex; gap: 6px; flex-wrap: wrap; }
 .set-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 12px; font-size: 13px; color: var(--muted); }

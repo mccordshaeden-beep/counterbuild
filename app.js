@@ -363,18 +363,7 @@ function wire() {
   $('threat-list').addEventListener('click', (e) => { const b = e.target.closest('[data-tag]'); if (b) toggleTag(Number(b.dataset.hero), b.dataset.tag); });
 }
 
-function showView(v) {
-  for (const name of ['build', 'timer']) {
-    $('view-' + name).hidden = name !== v;
-    $('tab-' + name).setAttribute('aria-selected', name === v);
-  }
-  if (location.hash !== '#' + v) history.replaceState(null, '', v === 'build' ? location.pathname : '#timer');
-}
-
 async function boot() {
-  document.querySelector('.tabs').addEventListener('click', (e) => { const b = e.target.closest('[data-view]'); if (b) showView(b.dataset.view); });
-  window.addEventListener('hashchange', () => showView(location.hash === '#timer' ? 'timer' : 'build'));
-  showView(location.hash === '#timer' ? 'timer' : 'build');
   initTimer();
   wire();
   $('build').innerHTML = '<p class="empty-note">Loading heroes and items…</p>';

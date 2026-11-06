@@ -43,11 +43,6 @@
   <p class="filter-note" id="filter-note" hidden></p>
 </header>
 
-<nav class="tabs" role="tablist" aria-label="Sections">
-  <button role="tab" id="tab-build" data-view="build" aria-selected="true">Build</button>
-  <button role="tab" id="tab-timer" data-view="timer" aria-selected="false">Match timer</button>
-</nav>
-
 <main>
 <div id="view-build" class="view">
   <section class="panel live" aria-labelledby="live-h">
@@ -99,9 +94,9 @@
 
 </div>
 
-<div id="view-timer" class="view" hidden>
+<aside id="view-timer" class="view timer-col" aria-label="Match timer">
   <section class="panel clock-panel" aria-labelledby="t-h">
-    <h2 id="t-h" class="sr">Match timer</h2>
+    <h2 id="t-h">Match timer</h2>
     <div class="clock-row">
       <output id="t-clock" class="clock idle" aria-live="off">0:00</output>
       <div class="clock-btns">
@@ -141,7 +136,7 @@
     <div id="t-taps" class="taps"></div>
     <p class="hint" id="t-patch"></p>
   </section>
-</div>
+</aside>
 
   <footer class="foot">
     Match data from <a href="https://deadlock-api.com" target="_blank" rel="noopener">deadlock-api.com</a>, a community project not affiliated with Valve.
