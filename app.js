@@ -64,12 +64,47 @@ async function cached(key, hours, loader) {
   }
 }
 
+// ---------- item details for the hover card ----------
+const toText = (html) => {
+  const raw = String(html ?? '').replace(/\{[^}]*\}/g, '').replace(/<br\s*\/?>/gi, '\n');
+  try { return (new DOMParser().parseFromString(raw, 'text/html').body.textContent || '').replace(/[ \t]+/g, ' ').trim(); }
+  catch { return raw.replace(/<[^>]+>/g, '').trim(); }
+};
+const SKIP = /^(ability_?)?(channel|cast|charge_?delay|duration_?scale|tech_?power_?scale)/i;
+
+function itemInfo(i) {
+  const props = i.properties || {};
+  // Prefer the properties the game itself shows in the tooltip, in its order.
+  const order = [];
+  for (const sec of i.tooltip_sections || []) for (const at of sec.section_attributes || [])
+    for (const k of [...(at.important_properties || []), ...(at.properties || []), ...(at.elevated_properties || [])]) if (!order.includes(k)) order.push(k);
+  const names = order.length ? order : Object.keys(props);
+  const stats = [];
+  let cooldown = null;
+  for (const k of names) {
+    const p = props[k];
+    if (!p || typeof p !== 'object') continue;
+    const label = toText(p.label || p.name || '');
+    const num = Number(p.value);
+    if (!label || p.value == null || p.value === '' || (Number.isFinite(num) && num === 0)) continue;
+    if (/cooldown/i.test(k) && /^ability/i.test(k)) { cooldown = `${p.value}${p.postfix || 's'}`; continue; }
+    if (SKIP.test(k)) continue;
+    const sign = String(p.prefix || '').includes('sign') && Number.isFinite(num) && num > 0 ? '+' : '';
+    stats.push({ label, value: `${sign}${p.value}${toText(p.postfix || '')}` });
+    if (stats.length >= 10) break;
+  }
+  const d = i.description;
+  const desc = toText(typeof d === 'string' ? d : d?.desc || d?.passive || d?.active || '');
+  const activation = String(i.activation || '').toLowerCase();
+  return { stats, desc, cooldown, active: !!activation && activation !== 'passive' };
+}
+
 const pickImg = (o, keys) => { for (const k of keys) if (o && o[k]) return o[k]; return ''; };
 
 async function loadAssets() {
   const [heroesRaw, itemsRaw] = await Promise.all([
     cached('heroes2', 6, () => firstOk([`${API}/v1/assets/heroes`, `${ASSETS}/v2/heroes`])),
-    cached('items', 12, () => firstOk([`${API}/v1/assets/items/by-type/upgrade`, `${ASSETS}/v2/items/by-type/upgrade`, `${API}/v1/assets/items`, `${ASSETS}/v2/items`])),
+    cached('items2', 12, () => firstOk([`${API}/v1/assets/items/by-type/upgrade`, `${ASSETS}/v2/items/by-type/upgrade`, `${API}/v1/assets/items`, `${ASSETS}/v2/items`])),
   ]);
 
   state.heroes = (heroesRaw || [])
@@ -90,6 +125,7 @@ async function loadAssets() {
       slot: i.item_slot_type, cost: Number(i.cost) || 0,
       img: pickImg(i, ['shop_image_small_webp', 'shop_image_small', 'shop_image_webp', 'shop_image', 'image_webp', 'image']),
       cls: i.class_name, rawComponents: i.component_items || i.components || [],
+      info: itemInfo(i),
     });
   }
   // Upgrade parts arrive as class names or ids; turn them into item ids.
@@ -199,7 +235,7 @@ function itemCard(s) {
   const it = s.item;
   const why = s.reasons.length
     ? `<span class="why">vs ${esc([...new Set(s.reasons.flatMap((r) => r.names))].join(', '))}</span>` : '';
-  return `<li class="item s-${esc(it.slot)}">
+  return `<li class="item s-${esc(it.slot)}" data-item="${it.id}" tabindex="0">
     ${it.img ? `<img src="${esc(it.img)}" alt="" loading="lazy">` : '<span class="noimg"></span>'}
     <div class="it-body">
       <span class="it-name">${esc(it.name)}</span>
@@ -247,7 +283,7 @@ async function renderBuild() {
     if (s.into) notes.push(`<span class="up">upgrades into ${esc(s.into.name)}</span>`);
     if (s.upgradesFrom?.length) notes.push(`<span class="up">from ${esc(s.upgradesFrom.map((c) => c.name).join(' + '))}</span>`);
     if (s.reasons?.length) notes.push(`<span class="why">vs ${esc([...new Set(s.reasons.flatMap((r) => r.names))].join(', '))}</span>`);
-    return `<li class="step s-${esc(it.slot)}" data-at="${s.at ?? ''}">
+    return `<li class="step s-${esc(it.slot)}" data-at="${s.at ?? ''}" data-item="${it.id}" tabindex="0">
       <span class="n">${i + 1}</span>
       ${it.img ? `<img src="${esc(it.img)}" alt="" loading="lazy">` : '<span class="noimg"></span>'}
       <span class="st-body"><span class="it-name">${esc(it.name)}</span>${notes.join('')}</span>
@@ -397,6 +433,7 @@ function wire() {
 }
 
 async function boot() {
+  try { ['cb.c.items', 'cb.c.heroes'].forEach((k) => localStorage.removeItem(k)); } catch {} // old cache copies
   initTimer();
   wire();
   $('build').innerHTML = '<p class="empty-note">Loading heroes and items…</p>';
@@ -410,6 +447,58 @@ async function boot() {
   setMode(state.me ? 'enemy' : 'me');
   renderAll();
 }
+
+// ---------- hover card ----------
+const tip = document.createElement('div');
+tip.className = 'tip'; tip.setAttribute('role', 'tooltip'); tip.hidden = true;
+document.body.appendChild(tip);
+let tipFor = null;
+
+function tipHtml(it) {
+  const info = it.info || {};
+  const kind = { weapon: 'Weapon', vitality: 'Vitality', spirit: 'Spirit' }[it.slot] || '';
+  const s = state.stats.get(`${state.me}|${filterKey()}`)?.find?.((r) => Number(r.item_id) === it.id);
+  const m = s ? Number(s.matches ?? (Number(s.wins) + Number(s.losses))) : 0;
+  return `<div class="tip-head s-${esc(it.slot)}">
+      ${it.img ? `<img src="${esc(it.img)}" alt="">` : ''}
+      <div><b>${esc(it.name)}</b><span>${kind} · Tier ${it.tier} · ${it.cost.toLocaleString()} souls</span></div>
+    </div>
+    <div class="tip-tags"><span>${info.active ? 'Active' : 'Passive'}</span>${info.cooldown ? `<span>Cooldown ${esc(info.cooldown)}</span>` : ''}
+      ${m ? `<span>${(s.wins / m * 100).toFixed(1)}% win rate · ${m.toLocaleString()} games</span>` : ''}</div>
+    ${info.stats?.length ? `<dl class="tip-stats">${info.stats.map((x) => `<dt>${esc(x.label)}</dt><dd>${esc(x.value)}</dd>`).join('')}</dl>` : ''}
+    ${info.desc ? `<p class="tip-desc">${esc(info.desc)}</p>` : ''}
+    ${!info.stats?.length && !info.desc ? '<p class="tip-desc">No details in the game data for this item.</p>' : ''}`;
+}
+
+function showTip(el) {
+  const it = state.items.get(Number(el.dataset.item));
+  if (!it) return;
+  tipFor = el;
+  tip.innerHTML = tipHtml(it);
+  tip.hidden = false;
+  const r = el.getBoundingClientRect(), w = tip.offsetWidth, h = tip.offsetHeight;
+  const vw = document.documentElement.clientWidth, vh = window.innerHeight;
+  let left = Math.min(Math.max(8, r.left + 12), vw - w - 8);
+  let top = r.bottom + 6;
+  if (top + h > vh - 8) top = Math.max(8, r.top - h - 6);
+  tip.style.left = left + 'px'; tip.style.top = top + 'px';
+}
+function hideTip() { tip.hidden = true; tipFor = null; }
+
+document.addEventListener('pointerover', (e) => {
+  if (e.pointerType === 'touch') return;
+  const el = e.target.closest('[data-item]');
+  if (el && el !== tipFor) showTip(el);
+  else if (!el && !e.target.closest('.tip')) hideTip();
+});
+document.addEventListener('click', (e) => { // tap on phones
+  const el = e.target.closest('[data-item]');
+  if (el) { el === tipFor && !tip.hidden ? hideTip() : showTip(el); }
+  else if (!e.target.closest('.tip')) hideTip();
+});
+document.addEventListener('focusin', (e) => { const el = e.target.closest?.('[data-item]'); if (el) showTip(el); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') hideTip(); });
+document.addEventListener('scroll', hideTip, true);
 
 // Highlight the next thing to buy, following the match timer.
 setInterval(() => {

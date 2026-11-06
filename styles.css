@@ -228,3 +228,21 @@ h2 {
 .step.next { border-color: var(--brass); background: color-mix(in srgb, var(--brass) 16%, var(--raise)); }
 .step.next .n { color: var(--brass); }
 .more-h { font: 800 15px/1 var(--display); text-transform: uppercase; letter-spacing: .1em; margin: 22px 0 0; color: var(--muted); }
+
+/* Item hover card */
+[data-item] { cursor: help; }
+.tip { position: fixed; z-index: 50; width: min(320px, calc(100vw - 16px)); background: var(--panel); border: 1px solid var(--brass); border-radius: 10px; padding: 12px; box-shadow: 0 12px 30px rgb(0 0 0 / .5); font-size: 13px; pointer-events: auto; }
+.tip-head { display: flex; gap: 10px; align-items: center; padding-left: 8px; border-left: 4px solid var(--muted); }
+.tip-head.s-weapon { border-left-color: var(--weapon); }
+.tip-head.s-vitality { border-left-color: var(--vitality); }
+.tip-head.s-spirit { border-left-color: var(--spirit); }
+.tip-head img { width: 40px; height: 40px; object-fit: contain; border-radius: 6px; background: var(--bg); }
+.tip-head div { display: grid; }
+.tip-head b { font-size: 15px; }
+.tip-head span { color: var(--muted); font-size: 12px; }
+.tip-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
+.tip-tags span { background: var(--raise); border: 1px solid var(--line); border-radius: 999px; padding: 1px 8px; font-size: 11px; }
+.tip-stats { display: grid; grid-template-columns: 1fr auto; gap: 3px 12px; margin: 10px 0 0; }
+.tip-stats dt { color: var(--muted); }
+.tip-stats dd { margin: 0; font: 500 13px var(--mono); font-variant-numeric: tabular-nums; text-align: right; }
+.tip-desc { margin: 10px 0 0; color: var(--fg); white-space: pre-line; line-height: 1.45; }

@@ -1,5 +1,5 @@
 // Caches the app shell so it opens instantly and offline. Match data always comes fresh from the network.
-const CACHE = 'counterbuild-v8';
+const CACHE = 'counterbuild-v9';
 const SHELL = ['./', 'index.html', 'styles.css', 'app.js', 'engine.js', 'rules.js', 'timer.js', 'timers.js', 'icon.svg', 'manifest.webmanifest'];
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL.map((u) => new Request(u, { cache: 'reload' }))))); self.skipWaiting(); });
 self.addEventListener('activate', (e) => {
