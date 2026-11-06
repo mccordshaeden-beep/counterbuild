@@ -68,12 +68,12 @@ export async function loadMyStats(accountId, { heroById, face, onPickHero, el })
     profile = Array.isArray(p) ? p[0] : p;
   } catch (e) {
     el.innerHTML = `<p class="warn">Couldn't load your stats (${esc(e.message)}).</p>`;
-    return;
+    return null;
   }
   const s = summarize(history);
   if (!s.games.length) {
     el.innerHTML = '<p class="warn">No matches found for this Steam ID yet. If you just started playing, they can take a while to show up. Also check that your Steam profile and game details are public.</p>';
-    return;
+    return null;
   }
 
   const name = profile?.personaname;
@@ -117,4 +117,5 @@ export async function loadMyStats(accountId, { heroById, face, onPickHero, el })
     <ol class="games">${gameRows}</ol>`;
 
   el.querySelectorAll('[data-pick]').forEach((b) => b.addEventListener('click', () => onPickHero(Number(b.dataset.pick))));
+  return s;
 }
