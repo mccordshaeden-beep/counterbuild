@@ -13,7 +13,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@500&display=swap">
 <link rel="stylesheet" href="styles.css">
 </head>
-<body class="page-stats">
+<body class="page-build page-stats">
 <header class="top">
   <div class="brand">
     <span class="mark" aria-hidden="true"></span>
@@ -25,7 +25,8 @@
   </nav>
 </header>
 
-<main class="stats-main">
+<main>
+<div class="view split-left">
   <section class="panel" aria-labelledby="id-h">
     <h2 id="id-h">Your Steam ID</h2>
     <form id="id-form" class="live-row">
@@ -46,14 +47,17 @@
     <button class="btn" id="coach-more" type="button" hidden>Look at 20 games instead</button>
   </section>
 
-  <section class="panel mystats" aria-labelledby="me-h">
-    <h2 id="me-h">My stats</h2>
-    <div id="me-body"><p class="empty-note">Load your stats above.</p></div>
-  </section>
-
   <footer class="foot">
     Match data from <a href="https://deadlock-api.com" target="_blank" rel="noopener">deadlock-api.com</a>, a community project not affiliated with Valve. It only includes public matches it has picked up, so very recent games can be missing.
   </footer>
+</div>
+
+<aside class="view split-right" aria-label="My stats">
+  <section class="panel mystats" aria-labelledby="me-h">
+    <h2 id="me-h">My stats</h2>
+    <div id="me-body"><p class="empty-note">Load your stats on the left.</p></div>
+  </section>
+</aside>
 </main>
 
 <script type="module" src="stats-page.js"></script>
