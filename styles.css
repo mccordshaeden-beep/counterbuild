@@ -54,13 +54,19 @@ select, input {
 }
 
 main { max-width: 1280px; margin: 0 auto; display: grid; gap: 14px; padding-bottom: 28px; }
-/* Phone: timer on top, build below. Wide screen: build left, timer pinned on the right. */
+/* Narrow phone: timer on top, build below.
+   640px and wider: split down the middle, build left, timer right, each half scrolls on its own. */
 .timer-col { order: -1; }
-.foot { grid-column: 1 / -1; }
-@media (min-width: 1000px) {
-  main { grid-template-columns: minmax(0, 1fr) 380px; align-items: start; }
-  .timer-col { order: 0; position: sticky; top: 12px; max-height: calc(100vh - 24px); overflow-y: auto; }
-  .timer-col .clock { font-size: 64px; }
+@media (min-width: 640px) {
+  html, body { height: 100%; }
+  body { display: flex; flex-direction: column; overflow: hidden; }
+  .top { max-width: none; width: 100%; flex: none; border-bottom: 1px solid var(--line); margin-bottom: 0; }
+  main { flex: 1; min-height: 0; max-width: none; width: 100%; padding-bottom: 0;
+         grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0; }
+  .view { min-height: 0; overflow-y: auto; padding-block: 14px; align-content: start; }
+  #view-build { padding-right: 14px; }
+  .timer-col { order: 0; padding-left: 14px; border-left: 1px solid var(--line); }
+  .timer-col .clock { font-size: clamp(48px, 6vw, 72px); }
 }
 .view { display: grid; gap: 14px; min-width: 0; }
 
