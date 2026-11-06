@@ -1,4 +1,5 @@
 import { TAGS } from './rules.js';
+import { loadMyStats } from './mystats.js';
 import { initTimer, clock, fmt as fmtClock } from './timer.js';
 import { computeBuild, threatProfile, defaultTags, parseSteam, teamKey } from './engine.js';
 
@@ -400,6 +401,19 @@ function syncFilters() {
   } else note.hidden = true;
 }
 
+async function showMyStats() {
+  const acc = parseSteam($('steam').value || store.get('steam', ''));
+  if (!acc) { $('me-body').innerHTML = '<p class="warn">Paste your Steam profile link or ID in the Live match box first.</p>'; return; }
+  $('me-btn').disabled = true;
+  try {
+    await loadMyStats(acc, {
+      heroById: state.heroById, face: (h) => heroFace(h), el: $('me-body'),
+      onPickHero: (id) => { state.mode = 'me'; pickHero(id); document.getElementById('build-h').scrollIntoView({ behavior: 'smooth', block: 'start' }); },
+    });
+    $('me-btn').textContent = 'Refresh';
+  } finally { $('me-btn').disabled = false; }
+}
+
 // ---------- wiring ----------
 function wire() {
   $('steam').value = store.get('steam', '');
@@ -413,6 +427,7 @@ function wire() {
     if (parseSteam(v)) { store.set('steam', v); steamSaved(); }
   });
   steamSaved();
+  $('me-btn').addEventListener('click', showMyStats);
   $('rank').value = state.rank;
   $('mode').value = state.matchMode;
   $('style').value = state.style;
@@ -446,6 +461,7 @@ async function boot() {
   if (state.me && !state.heroById.has(state.me)) state.me = null;
   setMode(state.me ? 'enemy' : 'me');
   renderAll();
+  if (parseSteam(store.get('steam', ''))) showMyStats();
 }
 
 // ---------- hover card ----------

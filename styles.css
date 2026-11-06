@@ -246,3 +246,40 @@ h2 {
 .tip-stats dt { color: var(--muted); }
 .tip-stats dd { margin: 0; font: 500 13px var(--mono); font-variant-numeric: tabular-nums; text-align: right; }
 .tip-desc { margin: 10px 0 0; color: var(--fg); white-space: pre-line; line-height: 1.45; }
+
+/* My stats */
+.me-head { display: flex; align-items: center; gap: 10px; margin-top: 8px; font-size: 16px; }
+.me-head img { width: 36px; height: 36px; border-radius: 6px; }
+.me-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; margin-top: 10px; }
+.me-tiles div { display: grid; background: var(--raise); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; }
+.me-tiles span { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .08em; }
+.me-tiles b { font: 500 22px/1.2 var(--mono); font-variant-numeric: tabular-nums; }
+.me-tiles small { color: var(--muted); font-size: 12px; }
+.me-sub { font: 800 14px/1 var(--display); text-transform: uppercase; letter-spacing: .1em; margin: 16px 0 8px; display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+.me-sub small { font: 400 12px var(--body); letter-spacing: 0; text-transform: none; color: var(--muted); }
+.form { display: flex; gap: 3px; flex-wrap: wrap; }
+.form i { width: 14px; height: 22px; border-radius: 3px; background: var(--line); }
+.form i.w { background: var(--good); }
+.form i.l { background: var(--bad); }
+.table-wrap { overflow-x: auto; }
+.me-heroes { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+.me-heroes th { text-align: right; color: var(--muted); font-weight: 400; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; padding: 4px 6px; border-bottom: 1px solid var(--line); }
+.me-heroes th:first-child, .me-heroes td:first-child { text-align: left; }
+.me-heroes td { text-align: right; padding: 4px 6px; border-bottom: 1px solid var(--line); font-family: var(--mono); }
+.me-heroes td.good { color: var(--good); }
+.me-heroes td.bad { color: var(--bad); }
+.hero-link { display: flex; align-items: center; gap: 8px; background: none; border: 0; padding: 0; font: 700 13px var(--body); text-align: left; }
+.hero-link .face { width: 28px; height: 28px; }
+.hero-link:hover span { color: var(--brass); }
+.games { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.games li { display: grid; grid-template-columns: 28px minmax(0, 1fr) auto auto; grid-template-areas: "f m k s" "f w w w"; gap: 0 10px; align-items: center; padding: 6px 10px; background: var(--raise); border: 1px solid var(--line); border-left: 4px solid var(--line); border-radius: 8px; font-size: 13px; }
+.games li.w { border-left-color: var(--good); }
+.games li.l { border-left-color: var(--bad); }
+.games .face { grid-area: f; width: 28px; height: 28px; }
+.g-main { grid-area: m; min-width: 0; }
+.g-main em { font-style: normal; font-size: 11px; color: var(--muted); }
+.games li.w b { color: var(--good); }
+.games li.l b { color: var(--bad); }
+.g-kda { grid-area: k; font-family: var(--mono); }
+.g-souls { grid-area: s; font-family: var(--mono); color: var(--muted); }
+.g-when { grid-area: w; color: var(--muted); font-size: 11px; }
