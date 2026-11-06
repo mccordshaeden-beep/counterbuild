@@ -1,4 +1,5 @@
 import { TAGS } from './rules.js';
+import { initTimer } from './timer.js';
 import { computeBuild, threatProfile, defaultTags, parseSteam, teamKey } from './engine.js';
 
 const API = 'https://api.deadlock-api.com';
@@ -335,6 +336,16 @@ function syncFilters() {
 // ---------- wiring ----------
 function wire() {
   $('steam').value = store.get('steam', '');
+  const steamSaved = () => {
+    const v = store.get('steam', '');
+    if (v && parseSteam(v)) { $('live-status').textContent = 'Steam ID saved on this device. Tap Find my match once the game starts.'; $('live-status').className = 'status good'; }
+  };
+  $('steam').addEventListener('change', () => {
+    const v = $('steam').value.trim();
+    if (!v) { store.set('steam', ''); return; }
+    if (parseSteam(v)) { store.set('steam', v); steamSaved(); }
+  });
+  steamSaved();
   $('rank').value = state.rank;
   $('mode').value = state.matchMode;
   $('rank').addEventListener('change', (e) => { state.rank = e.target.value; store.set('rank', state.rank); syncFilters(); renderBuild(); });
@@ -352,7 +363,19 @@ function wire() {
   $('threat-list').addEventListener('click', (e) => { const b = e.target.closest('[data-tag]'); if (b) toggleTag(Number(b.dataset.hero), b.dataset.tag); });
 }
 
+function showView(v) {
+  for (const name of ['build', 'timer']) {
+    $('view-' + name).hidden = name !== v;
+    $('tab-' + name).setAttribute('aria-selected', name === v);
+  }
+  if (location.hash !== '#' + v) history.replaceState(null, '', v === 'build' ? location.pathname : '#timer');
+}
+
 async function boot() {
+  document.querySelector('.tabs').addEventListener('click', (e) => { const b = e.target.closest('[data-view]'); if (b) showView(b.dataset.view); });
+  window.addEventListener('hashchange', () => showView(location.hash === '#timer' ? 'timer' : 'build'));
+  showView(location.hash === '#timer' ? 'timer' : 'build');
+  initTimer();
   wire();
   $('build').innerHTML = '<p class="empty-note">Loading heroes and items…</p>';
   try {

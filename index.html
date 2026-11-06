@@ -43,7 +43,13 @@
   <p class="filter-note" id="filter-note" hidden></p>
 </header>
 
+<nav class="tabs" role="tablist" aria-label="Sections">
+  <button role="tab" id="tab-build" data-view="build" aria-selected="true">Build</button>
+  <button role="tab" id="tab-timer" data-view="timer" aria-selected="false">Match timer</button>
+</nav>
+
 <main>
+<div id="view-build" class="view">
   <section class="panel live" aria-labelledby="live-h">
     <h2 id="live-h">Live match</h2>
     <form id="live-form" class="live-row">
@@ -90,6 +96,52 @@
     <h2 id="mu-h">Your hero against theirs</h2>
     <div id="matchups"></div>
   </section>
+
+</div>
+
+<div id="view-timer" class="view" hidden>
+  <section class="panel clock-panel" aria-labelledby="t-h">
+    <h2 id="t-h" class="sr">Match timer</h2>
+    <div class="clock-row">
+      <output id="t-clock" class="clock idle" aria-live="off">0:00</output>
+      <div class="clock-btns">
+        <button class="btn primary" id="t-start">Start at 0:00</button>
+        <button class="btn" id="t-minus" aria-label="Back 5 seconds">−5s</button>
+        <button class="btn" id="t-plus" aria-label="Forward 5 seconds">+5s</button>
+        <button class="btn" id="t-reset">Reset</button>
+      </div>
+    </div>
+    <p class="status" id="t-state">Press Start when the match clock starts.</p>
+    <form id="t-set" class="set-row">
+      <label for="t-at">Started late? Type the game clock</label>
+      <input id="t-at" inputmode="numeric" placeholder="4:12" autocomplete="off">
+      <button class="btn" type="submit">Set</button>
+      <span class="status bad" id="t-set-msg"></span>
+    </form>
+    <div class="opts">
+      <label><input type="checkbox" id="t-sound"> Beeps</label>
+      <label><input type="checkbox" id="t-voice"> Spoken alerts</label>
+      <label><input type="checkbox" id="t-awake"> Keep screen on</label>
+    </div>
+  </section>
+
+  <section class="panel" aria-labelledby="t-now-h">
+    <h2 id="t-now-h">Right now</h2>
+    <div id="t-phase" class="phase"></div>
+  </section>
+
+  <section class="panel" aria-labelledby="t-next-h">
+    <h2 id="t-next-h">Coming up</h2>
+    <ol id="t-next" class="next"></ol>
+    <p class="hint">You get a warning 30 seconds before each one, and another when it's up.</p>
+  </section>
+
+  <section class="panel" aria-labelledby="t-tap-h">
+    <h2 id="t-tap-h">Tap when it happens</h2>
+    <div id="t-taps" class="taps"></div>
+    <p class="hint" id="t-patch"></p>
+  </section>
+</div>
 
   <footer class="foot">
     Match data from <a href="https://deadlock-api.com" target="_blank" rel="noopener">deadlock-api.com</a>, a community project not affiliated with Valve.

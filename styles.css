@@ -54,6 +54,50 @@ select, input {
 }
 
 main { max-width: 980px; margin: 0 auto; display: grid; gap: 14px; padding-bottom: 28px; }
+.view { display: grid; gap: 14px; min-width: 0; }
+
+.tabs { max-width: 980px; margin: 0 auto 12px; display: flex; gap: 4px; border-bottom: 1px solid var(--line); }
+.tabs button { border: 0; background: none; padding: 10px 14px; font: 800 16px/1 var(--display); text-transform: uppercase; letter-spacing: .08em; color: var(--muted); border-bottom: 3px solid transparent; margin-bottom: -1px; }
+.tabs button[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--brass); }
+
+.clock-row { display: flex; align-items: center; gap: 12px 20px; flex-wrap: wrap; }
+.clock { font: 500 clamp(56px, 14vw, 96px)/1 var(--mono); font-variant-numeric: tabular-nums; color: var(--fg); letter-spacing: -.02em; }
+.clock.idle { color: var(--muted); }
+.clock-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+.set-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 12px; font-size: 13px; color: var(--muted); }
+.set-row input { width: 80px; }
+.opts { display: flex; gap: 8px 18px; flex-wrap: wrap; margin-top: 12px; font-size: 14px; }
+.opts label { display: flex; gap: 6px; align-items: center; }
+.opts input { accent-color: var(--brass); width: 18px; height: 18px; }
+
+.phase h3 { font: 800 22px/1.1 var(--display); text-transform: uppercase; letter-spacing: .06em; margin: 0 0 6px; }
+.phase ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+
+.next { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.ev { display: grid; grid-template-columns: 76px 1fr; gap: 12px; align-items: start; padding: 10px 12px; background: var(--raise); border: 1px solid var(--line); border-left: 4px solid var(--muted); border-radius: 8px; min-width: 0; }
+.ev.k-camp { border-left-color: var(--vitality); }
+.ev.k-souls { border-left-color: var(--brass); }
+.ev.k-buff { border-left-color: var(--spirit); }
+.ev.k-obj { border-left-color: var(--weapon); }
+.ev.k-heal { border-left-color: var(--good); }
+.ev.k-tap { border-left-color: var(--bad); }
+.ev.soon { background: color-mix(in srgb, var(--brass) 12%, var(--raise)); border-color: color-mix(in srgb, var(--brass) 50%, var(--line)); }
+.ev.now { background: color-mix(in srgb, var(--brass) 26%, var(--raise)); border-color: var(--brass); }
+.ev-when { display: grid; }
+.ev-when b { font: 500 20px/1.1 var(--mono); font-variant-numeric: tabular-nums; }
+.ev-when small { color: var(--muted); font-size: 11px; }
+.ev-body { display: grid; min-width: 0; }
+.ev-name { font-weight: 700; }
+.ev-name em { font-style: normal; font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-left: 6px; }
+.ev-tip { color: var(--muted); font-size: 13px; }
+
+.taps { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px; }
+.tap { display: grid; gap: 2px; text-align: left; padding: 12px; background: var(--raise); border: 1px solid var(--line); border-radius: 8px; }
+.tap b { font-weight: 700; }
+.tap span { color: var(--muted); font: 500 13px var(--mono); }
+.tap.counting { border-color: var(--bad); }
+.tap.counting span { color: var(--fg); }
+.tap:disabled { opacity: .5; cursor: not-allowed; }
 .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px; min-width: 0; }
 h2 {
   font: 800 19px/1.1 var(--display); text-transform: uppercase; letter-spacing: .08em; margin: 0 0 10px;
