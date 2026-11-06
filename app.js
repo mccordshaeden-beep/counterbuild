@@ -1,5 +1,5 @@
 import { TAGS } from './rules.js';
-import { initTimer } from './timer.js';
+import { initTimer, clock, fmt as fmtClock } from './timer.js';
 import { computeBuild, threatProfile, defaultTags, parseSteam, teamKey } from './engine.js';
 
 const API = 'https://api.deadlock-api.com';
@@ -26,6 +26,7 @@ const state = {
   mode: 'me',
   rank: store.get('rank', 'all'),
   matchMode: store.get('matchMode', 'Ranked,Unranked'),
+  style: store.get('style', 'stats'),
   stats: new Map(),           // cache key -> item stats array
   counters: new Map(),        // rank -> counter rows
   filter: '',
@@ -87,7 +88,16 @@ async function loadAssets() {
       id: Number(i.id), name: i.name, tier: Number(i.item_tier) || 0,
       slot: i.item_slot_type, cost: Number(i.cost) || 0,
       img: pickImg(i, ['shop_image_small_webp', 'shop_image_small', 'shop_image_webp', 'shop_image', 'image_webp', 'image']),
+      cls: i.class_name, rawComponents: i.component_items || i.components || [],
     });
+  }
+  // Upgrade parts arrive as class names or ids; turn them into item ids.
+  const byClass = new Map([...state.items.values()].filter((it) => it.cls).map((it) => [it.cls, it.id]));
+  for (const it of state.items.values()) {
+    it.components = (Array.isArray(it.rawComponents) ? it.rawComponents : [])
+      .map((c) => (typeof c === 'number' ? c : byClass.get(c) ?? (Number(c) || null)))
+      .filter((id) => id && id !== it.id && state.items.has(id));
+    delete it.rawComponents;
   }
 }
 
@@ -221,7 +231,7 @@ async function renderBuild() {
 
   const enemies = state.enemies.map((id) => state.heroById.get(id)).filter(Boolean)
     .map((h) => ({ name: h.name, tags: tagsFor(h.id) }));
-  const build = computeBuild({ stats, items: state.items, threats: threatProfile(enemies) });
+  const build = computeBuild({ stats, items: state.items, threats: threatProfile(enemies), style: state.style });
 
   $('build-meta').textContent = build.hasStats
     ? `${build.sample.toLocaleString()} recent ${me.name} games · leans ${build.heroLean === 'spirit' ? 'spirit' : 'gun'} · ${build.cost.toLocaleString()} souls total`
@@ -230,8 +240,28 @@ async function renderBuild() {
   const stage = (title, sub, list) => list.length ? `
     <div class="stage"><h3>${title}<small>${sub}</small></h3><ol class="items">${list.map(itemCard).join('')}</ol></div>` : '';
 
+  const pathRow = (s, i) => {
+    const it = s.item;
+    const notes = [];
+    if (s.into) notes.push(`<span class="up">upgrades into ${esc(s.into.name)}</span>`);
+    if (s.upgradesFrom?.length) notes.push(`<span class="up">from ${esc(s.upgradesFrom.map((c) => c.name).join(' + '))}</span>`);
+    if (s.reasons?.length) notes.push(`<span class="why">vs ${esc([...new Set(s.reasons.flatMap((r) => r.names))].join(', '))}</span>`);
+    return `<li class="step s-${esc(it.slot)}" data-at="${s.at ?? ''}">
+      <span class="n">${i + 1}</span>
+      ${it.img ? `<img src="${esc(it.img)}" alt="" loading="lazy">` : '<span class="noimg"></span>'}
+      <span class="st-body"><span class="it-name">${esc(it.name)}</span>${notes.join('')}</span>
+      <span class="st-num"><b>${s.pay.toLocaleString()}</b><small>${s.running.toLocaleString()} total${s.at != null ? ` · ~${fmtClock(s.at)}` : ''}</small></span>
+    </li>`;
+  };
+  const pathHtml = build.path.length ? `
+    <div class="stage path"><h3>Build order<small>${state.style === 'balanced' ? 'Tank + damage · ' : ''}Buy top to bottom · ${build.final.length} slots when done</small></h3>
+    <ol class="steps">${build.path.map(pathRow).join('')}</ol>
+    <p class="hint">Times are when players usually buy each item. With the match timer running, your next buy is highlighted.</p></div>` : '';
+
   el.innerHTML = (statsError ? `<p class="warn">Couldn't load item stats (${esc(statsError.message)}). Showing counter items only. Try again in a minute.</p>` : '')
     + (!statsError && !build.hasStats ? `<p class="warn">No recent games for ${esc(me.name)} with these filters. Try Ranked + unranked.</p>` : '')
+    + pathHtml
+    + (build.path.length ? '<h3 class="more-h">Other strong items</h3>' : '')
     + stage('Early', 'Tier 1 and 2 · lane', build.stages.early)
     + stage('Core', 'Tier 3 · mid game', build.stages.core)
     + stage('Late', 'Tier 4 · when you have the souls', build.stages.late)
@@ -348,6 +378,8 @@ function wire() {
   steamSaved();
   $('rank').value = state.rank;
   $('mode').value = state.matchMode;
+  $('style').value = state.style;
+  $('style').addEventListener('change', (e) => { state.style = e.target.value; store.set('style', state.style); renderBuild(); });
   $('rank').addEventListener('change', (e) => { state.rank = e.target.value; store.set('rank', state.rank); syncFilters(); renderBuild(); });
   $('mode').addEventListener('change', (e) => { state.matchMode = e.target.value; store.set('matchMode', state.matchMode); syncFilters(); renderBuild(); });
   syncFilters();
@@ -377,6 +409,21 @@ async function boot() {
   setMode(state.me ? 'enemy' : 'me');
   renderAll();
 }
+
+// Highlight the next thing to buy, following the match timer.
+setInterval(() => {
+  const now = clock();
+  const rows = [...document.querySelectorAll('.step[data-at]')].filter((r) => r.dataset.at !== '');
+  let marked = false;
+  for (const r of rows) {
+    const at = Number(r.dataset.at);
+    const done = now > 0 && at < now - 90;
+    r.classList.toggle('past', done);
+    const next = now > 0 && !done && !marked;
+    r.classList.toggle('next', next);
+    if (next) marked = true;
+  }
+}, 1000);
 
 boot();
 

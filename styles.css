@@ -209,3 +209,22 @@ h2 {
   .items { grid-template-columns: 1fr; }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+
+/* Build order */
+.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.step { display: grid; grid-template-columns: 22px 36px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 6px 10px; background: var(--raise); border: 1px solid var(--line); border-left: 4px solid var(--muted); border-radius: 8px; }
+.step.s-weapon { border-left-color: var(--weapon); }
+.step.s-vitality { border-left-color: var(--vitality); }
+.step.s-spirit { border-left-color: var(--spirit); }
+.step .n { font: 500 13px var(--mono); color: var(--muted); text-align: right; }
+.step img, .step .noimg { width: 36px; height: 36px; object-fit: contain; border-radius: 6px; background: var(--bg); }
+.st-body { display: flex; flex-wrap: wrap; gap: 2px 10px; align-items: baseline; min-width: 0; }
+.st-body .why, .st-body .up { font-size: 12px; margin: 0; }
+.up { color: var(--muted); }
+.st-num { display: grid; text-align: right; }
+.st-num b { font: 500 14px var(--mono); font-variant-numeric: tabular-nums; }
+.st-num small { color: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+.step.past { opacity: .45; }
+.step.next { border-color: var(--brass); background: color-mix(in srgb, var(--brass) 16%, var(--raise)); }
+.step.next .n { color: var(--brass); }
+.more-h { font: 800 15px/1 var(--display); text-transform: uppercase; letter-spacing: .1em; margin: 22px 0 0; color: var(--muted); }
