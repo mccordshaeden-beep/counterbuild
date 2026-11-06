@@ -46,6 +46,12 @@ export function occurrences(now, tapState = taps) {
     if (e.every) for (let t = e.first; t <= UNTIL; t += e.every) times.push(t);
     for (const t of times) out.push({ key: `${e.id}@${t}`, name: e.name, kind: e.kind, at: t, tip: e.tip });
   }
+  // Phase changes show in the list too, so you can see the next one coming.
+  PHASES.forEach((p, i) => {
+    if (!p.from) return;
+    out.push({ key: `phase@${p.from}`, name: `${p.title} phase`, kind: 'phase', at: p.from, tip: p.tips[0],
+      prev: PHASES[i - 1]?.title, title: p.title });
+  });
   for (const t of TAP_TIMERS) {
     const s = tapState[t.id];
     if (!s) continue;
@@ -77,14 +83,20 @@ function say(text) {
 function checkAlerts(now) {
   if (!run || run.paused != null) return;
   const soon = [], up = [];
+  let phaseMsg = '';
   for (const o of occurrences(now)) {
     const pre = o.key + '|pre', on = o.key + '|now';
+    if (o.kind === 'phase') {
+      if (now >= o.at && now < o.at + 3 && !fired.has(on)) { fired.add(on); phaseMsg = `${o.prev} phase is over. Now: ${o.title}. ${o.tip}`; }
+      continue;
+    }
     if (o.kind !== 'info' && now >= o.at - PRE && now < o.at - PRE + 4 && !fired.has(pre)) { fired.add(pre); soon.push(o.name); }
     if (now >= o.at && now < o.at + 3 && !fired.has(on)) { fired.add(on); up.push(o.name); }
   }
   const join = (a) => a.length < 2 ? a[0] : a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1];
   if (soon.length) { beep(false); say(`${join(soon)} in 30 seconds`); }
   if (up.length) { beep(true); say(`${join(up)} now`); }
+  if (phaseMsg) { if (!up.length) beep(true); say(phaseMsg); }
 }
 
 // ---------- screen awake ----------
@@ -127,7 +139,7 @@ function tap(id) {
 }
 
 // ---------- render ----------
-const KIND = { camp: 'Camp', souls: 'Souls', buff: 'Buff', obj: 'Objective', heal: 'Heal', info: 'Heads-up', tap: 'Respawn' };
+const KIND = { phase: 'Phase', camp: 'Camp', souls: 'Souls', buff: 'Buff', obj: 'Objective', heal: 'Heal', info: 'Heads-up', tap: 'Respawn' };
 
 function render() {
   const now = clock();

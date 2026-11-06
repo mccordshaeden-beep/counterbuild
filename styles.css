@@ -93,6 +93,8 @@ main { max-width: 1280px; margin: 0 auto; display: grid; gap: 14px; padding-bott
 .ev.k-obj { border-left-color: var(--weapon); }
 .ev.k-heal { border-left-color: var(--good); }
 .ev.k-tap { border-left-color: var(--bad); }
+.ev.k-phase { border-left-color: var(--fg); background: var(--panel); }
+.ev.k-phase .ev-name { text-transform: uppercase; letter-spacing: .06em; font-family: var(--display); font-weight: 800; font-size: 16px; }
 .ev.soon { background: color-mix(in srgb, var(--brass) 12%, var(--raise)); border-color: color-mix(in srgb, var(--brass) 50%, var(--line)); }
 .ev.now { background: color-mix(in srgb, var(--brass) 26%, var(--raise)); border-color: var(--brass); }
 .ev-when { display: grid; }
