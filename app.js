@@ -68,12 +68,13 @@ const pickImg = (o, keys) => { for (const k of keys) if (o && o[k]) return o[k];
 
 async function loadAssets() {
   const [heroesRaw, itemsRaw] = await Promise.all([
-    cached('heroes', 12, () => firstOk([`${API}/v1/assets/heroes`, `${ASSETS}/v2/heroes`])),
+    cached('heroes2', 6, () => firstOk([`${API}/v1/assets/heroes`, `${ASSETS}/v2/heroes`])),
     cached('items', 12, () => firstOk([`${API}/v1/assets/items/by-type/upgrade`, `${ASSETS}/v2/items/by-type/upgrade`, `${API}/v1/assets/items`, `${ASSETS}/v2/items`])),
   ]);
 
   state.heroes = (heroesRaw || [])
-    .filter((h) => h.player_selectable !== false && !h.disabled && !h.in_development)
+    // Only hide heroes the data says you can't pick. "In development" can still mean released.
+    .filter((h) => h.player_selectable !== false && !h.disabled && h.name)
     .map((h) => ({
       id: h.id, name: h.name, type: h.hero_type,
       img: pickImg(h.images, ['icon_hero_card_webp', 'icon_hero_card', 'icon_image_small_webp', 'icon_image_small', 'minimap_image_webp', 'minimap_image']),

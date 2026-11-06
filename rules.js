@@ -44,8 +44,23 @@ export const HERO_TAGS = {
   'fathom':      ['spirit', 'cc'],
   'mina':        ['spirit', 'dive'],
   'venator':     ['gun'],
-  'victor':      ['spirit', 'tank'],
+  'victor':      ['gun', 'tank'],
   'baba':        ['spirit'],
+  // Newer heroes: set from their role. Tap tags in the app to correct them as you learn them.
+  'apollo':        ['gun', 'dive'],
+  'billy':         ['gun', 'tank', 'dive'],
+  'celeste':       ['spirit'],
+  'deadman danny': ['gun'],
+  'drifter':       ['gun', 'dive'],
+  'graves':        ['spirit', 'cc'],
+  'nurse harrow':  ['spirit', 'heal'],
+  'rat king':      ['gun', 'tank', 'dive'],
+  'rem':           ['spirit'],
+  'silver':        ['gun', 'tank'],
+  'solomon':       ['spirit'],
+  'the doorman':   ['spirit', 'cc'],
+  'doorman':       ['spirit', 'cc'],
+  'violet':        ['spirit'],
 };
 
 // Used when a hero has no entry above but the game data says what kind of hero it is.
