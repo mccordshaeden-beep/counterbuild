@@ -53,7 +53,7 @@ export const HERO_TAGS = {
   'deadman danny': ['gun'],
   'drifter':       ['gun', 'dive'],
   'graves':        ['spirit', 'cc'],
-  'nurse harrow':  ['spirit', 'heal'],
+  'nurse harrow':  ['spirit', 'heal', 'cc'],
   'rat king':      ['gun', 'tank', 'dive'],
   'rem':           ['spirit'],
   'silver':        ['gun', 'tank'],
