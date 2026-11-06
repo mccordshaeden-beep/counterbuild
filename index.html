@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Counterbuild</title>
+<meta name="description" content="Deadlock item builds tuned to the heroes you're facing.">
+<meta name="theme-color" content="#10171a">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand">
+    <span class="mark" aria-hidden="true"></span>
+    <h1>Counterbuild</h1>
+  </div>
+  <label class="rank">
+    <span>Data from</span>
+    <select id="rank">
+      <option value="all">All ranks</option>
+      <option value="51">Ritualist+</option>
+      <option value="91">Phantom+</option>
+      <option value="111">Eternus</option>
+    </select>
+  </label>
+</header>
+
+<main>
+  <section class="panel live" aria-labelledby="live-h">
+    <h2 id="live-h">Live match</h2>
+    <form id="live-form" class="live-row">
+      <label class="sr" for="steam">Steam profile link or ID</label>
+      <input id="steam" inputmode="numeric" autocomplete="off" placeholder="Steam profile link or 7656… ID">
+      <button type="submit" class="btn primary" id="live-btn">Find my match</button>
+    </form>
+    <p class="status" id="live-status">Paste your Steam profile link once. It's remembered on this device.</p>
+  </section>
+
+  <section class="panel picks" aria-labelledby="picks-h">
+    <div class="picks-head">
+      <h2 id="picks-h">Heroes</h2>
+      <div class="mode" role="tablist" aria-label="What you're picking">
+        <button role="tab" id="mode-me" aria-selected="true">You</button>
+        <button role="tab" id="mode-enemy" aria-selected="false">Enemies <b id="enemy-count">0/6</b></button>
+      </div>
+    </div>
+    <div class="lineup">
+      <div class="slot-me" id="me-slot"></div>
+      <span class="vs">vs</span>
+      <div class="enemy-slots" id="enemy-slots"></div>
+    </div>
+    <input id="hero-search" type="search" placeholder="Filter heroes" autocomplete="off">
+    <div class="hero-grid" id="hero-grid"></div>
+  </section>
+
+  <section class="panel threats" aria-labelledby="threat-h" id="threat-panel">
+    <h2 id="threat-h">What they bring</h2>
+    <p class="hint">Tap a tag on an enemy to switch it on or off. The build updates right away.</p>
+    <div id="threat-list" class="threat-list"></div>
+    <div id="threat-sum" class="threat-sum"></div>
+  </section>
+
+  <section class="panel build" aria-labelledby="build-h">
+    <div class="build-head">
+      <h2 id="build-h">Your build</h2>
+      <span class="meta" id="build-meta"></span>
+    </div>
+    <div id="build"></div>
+  </section>
+
+  <section class="panel matchups" aria-labelledby="mu-h" id="mu-panel" hidden>
+    <h2 id="mu-h">Your hero against theirs</h2>
+    <div id="matchups"></div>
+  </section>
+
+  <footer class="foot">
+    Match data from <a href="https://deadlock-api.com" target="_blank" rel="noopener">deadlock-api.com</a>, a community project not affiliated with Valve.
+    Win rates are scored against other items of the same tier, so late-game items don't win just for being late.
+  </footer>
+</main>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>

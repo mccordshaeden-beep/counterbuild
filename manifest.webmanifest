@@ -1,0 +1,10 @@
+{
+  "name": "Counterbuild",
+  "short_name": "Counterbuild",
+  "description": "Deadlock item builds tuned to the heroes you're facing.",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#10171a",
+  "theme_color": "#10171a",
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}
