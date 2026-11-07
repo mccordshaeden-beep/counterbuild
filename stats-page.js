@@ -130,11 +130,21 @@ async function boot() {
   $('steam').value = store.get('steam', '');
   $('id-form').addEventListener('submit', (e) => { e.preventDefault(); load(); });
   $('coach-more').addEventListener('click', () => runCoach(20));
+  // The service allows one Steam check per hour from each connection, so the button waits out the hour.
+  const HOUR = 3600e3;
+  const syncBtn = () => {
+    const b = $('me-fresh');
+    const left = store.get('freshAt', 0) + HOUR - Date.now();
+    b.disabled = left > 0;
+    b.textContent = left > 0 ? `Next check in ${Math.ceil(left / 60000)} min` : 'Check for new matches';
+  };
   $('me-fresh').addEventListener('click', async () => {
     const b = $('me-fresh');
     b.disabled = true; b.textContent = 'Checking…';
-    try { await load(true); } finally { b.disabled = false; b.textContent = 'Check for new matches'; }
+    store.set('freshAt', Date.now());
+    try { await load(true); } finally { syncBtn(); }
   });
+  syncBtn(); setInterval(syncBtn, 30000);
   heroById = await loadHeroes();
   if (parseSteam($('steam').value)) load();
 }

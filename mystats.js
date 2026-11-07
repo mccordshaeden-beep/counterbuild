@@ -8,7 +8,7 @@ async function getJSON(url, ms = 20000) {
   const t = setTimeout(() => ctl.abort(), ms);
   try {
     const r = await fetch(url, { signal: ctl.signal });
-    if (!r.ok) throw new Error(r.status === 429 ? 'too many requests, try again in a minute' : `error ${r.status}`);
+    if (!r.ok) throw new Error(r.status === 429 ? 'too many requests (429), try again in a minute' : `error ${r.status}`);
     return await r.json();
   } finally { clearTimeout(t); }
 }
@@ -58,11 +58,11 @@ const mmss = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart
 
 export async function loadMyStats(accountId, { heroById, face, onPickHero, el, fresh = false }) {
   el.innerHTML = `<p class="empty-note">${fresh ? 'Asking Steam for your newest matches. This can take up to a minute…' : 'Loading your matches…'}</p>`;
-  let history, profile = null, refetchFailed = false;
+  let history, profile = null, refetchFailed = null;
   const base = `${API}/v1/players/${accountId}/match-history`;
   // fresh: the service asks Steam directly instead of waiting for its regular update. Falls back to the normal list.
   const historyReq = fresh
-    ? getJSON(`${base}?force_refetch=true`, 90000).catch(() => { refetchFailed = true; return getJSON(base); })
+    ? getJSON(`${base}?force_refetch=true`, 90000).catch((e) => { refetchFailed = /429|too many/.test(e.message) ? 'busy' : 'error'; return getJSON(base); })
     : getJSON(base);
   try {
     const [h, p] = await Promise.all([
@@ -106,7 +106,7 @@ export async function loadMyStats(accountId, { heroById, face, onPickHero, el, f
 
   const newest = s.games[0];
   el.innerHTML = `
-    <p class="hint fresh-note">${refetchFailed ? 'Steam didn\'t answer, so this is the regular list. Try again in a few minutes. ' : ''}Newest match: ${ago(newest.start)}.</p>
+    <p class="hint fresh-note">${refetchFailed === 'busy' ? 'The Steam check is used up for now (it\'s shared by everyone using the stats service), so this is the regular list. ' : refetchFailed ? 'Steam didn\'t answer, so this is the regular list. ' : fresh ? 'Checked with Steam just now. ' : ''}Newest match: ${ago(newest.start)}.</p>
     ${name ? `<div class="me-head">${avatar ? `<img src="${esc(avatar)}" alt="">` : ''}<b>${esc(name)}</b></div>` : ''}
     <div class="me-tiles">
       <div><span>Record</span><b>${s.all.wins}–${s.all.losses}</b><small>${s.all.games.toLocaleString()} games</small></div>
