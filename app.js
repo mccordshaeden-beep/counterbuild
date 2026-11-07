@@ -1,4 +1,7 @@
 import { TAGS } from './rules.js';
+import { loadAssets as loadShared } from './assets.js';
+import { initItemTips } from './itemtip.js';
+import { buildsFor, walkBuild, missingCounters } from './mybuilds.js';
 import { initTimer, clock, fmt as fmtClock } from './timer.js';
 import { computeBuild, threatProfile, defaultTags, parseSteam, teamKey } from './engine.js';
 
@@ -64,78 +67,9 @@ async function cached(key, hours, loader) {
   }
 }
 
-// ---------- item details for the hover card ----------
-const toText = (html) => {
-  const raw = String(html ?? '').replace(/\{[^}]*\}/g, '').replace(/<br\s*\/?>/gi, '\n');
-  try { return (new DOMParser().parseFromString(raw, 'text/html').body.textContent || '').replace(/[ \t]+/g, ' ').trim(); }
-  catch { return raw.replace(/<[^>]+>/g, '').trim(); }
-};
-const SKIP = /^(ability_?)?(channel|cast|charge_?delay|duration_?scale|tech_?power_?scale)/i;
-
-function itemInfo(i) {
-  const props = i.properties || {};
-  // Prefer the properties the game itself shows in the tooltip, in its order.
-  const order = [];
-  for (const sec of i.tooltip_sections || []) for (const at of sec.section_attributes || [])
-    for (const k of [...(at.important_properties || []), ...(at.properties || []), ...(at.elevated_properties || [])]) if (!order.includes(k)) order.push(k);
-  const names = order.length ? order : Object.keys(props);
-  const stats = [];
-  let cooldown = null;
-  for (const k of names) {
-    const p = props[k];
-    if (!p || typeof p !== 'object') continue;
-    const label = toText(p.label || p.name || '');
-    const num = Number(p.value);
-    if (!label || p.value == null || p.value === '' || (Number.isFinite(num) && num === 0)) continue;
-    if (/cooldown/i.test(k) && /^ability/i.test(k)) { cooldown = `${p.value}${p.postfix || 's'}`; continue; }
-    if (SKIP.test(k)) continue;
-    const sign = String(p.prefix || '').includes('sign') && Number.isFinite(num) && num > 0 ? '+' : '';
-    stats.push({ label, value: `${sign}${p.value}${toText(p.postfix || '')}` });
-    if (stats.length >= 10) break;
-  }
-  const d = i.description;
-  const desc = toText(typeof d === 'string' ? d : d?.desc || d?.passive || d?.active || '');
-  const activation = String(i.activation || '').toLowerCase();
-  return { stats, desc, cooldown, active: !!activation && activation !== 'passive' };
-}
-
-const pickImg = (o, keys) => { for (const k of keys) if (o && o[k]) return o[k]; return ''; };
-
 async function loadAssets() {
-  const [heroesRaw, itemsRaw] = await Promise.all([
-    cached('heroes2', 6, () => firstOk([`${API}/v1/assets/heroes`, `${ASSETS}/v2/heroes`])),
-    cached('items2', 12, () => firstOk([`${API}/v1/assets/items/by-type/upgrade`, `${ASSETS}/v2/items/by-type/upgrade`, `${API}/v1/assets/items`, `${ASSETS}/v2/items`])),
-  ]);
-
-  state.heroes = (heroesRaw || [])
-    // Only hide heroes the data says you can't pick. "In development" can still mean released.
-    .filter((h) => h.player_selectable !== false && !h.disabled && h.name)
-    .map((h) => ({
-      id: h.id, name: h.name, type: h.hero_type,
-      img: pickImg(h.images, ['icon_hero_card_webp', 'icon_hero_card', 'icon_image_small_webp', 'icon_image_small', 'minimap_image_webp', 'minimap_image']),
-    }))
-    .sort((a, b) => a.name.localeCompare(b.name));
-  state.heroById = new Map(state.heroes.map((h) => [h.id, h]));
-
-  for (const i of itemsRaw || []) {
-    if (i.type && i.type !== 'upgrade') continue;
-    if (i.shopable === false || i.disabled) continue;
-    state.items.set(Number(i.id), {
-      id: Number(i.id), name: i.name, tier: Number(i.item_tier) || 0,
-      slot: i.item_slot_type, cost: Number(i.cost) || 0,
-      img: pickImg(i, ['shop_image_small_webp', 'shop_image_small', 'shop_image_webp', 'shop_image', 'image_webp', 'image']),
-      cls: i.class_name, rawComponents: i.component_items || i.components || [],
-      info: itemInfo(i),
-    });
-  }
-  // Upgrade parts arrive as class names or ids; turn them into item ids.
-  const byClass = new Map([...state.items.values()].filter((it) => it.cls).map((it) => [it.cls, it.id]));
-  for (const it of state.items.values()) {
-    it.components = (Array.isArray(it.rawComponents) ? it.rawComponents : [])
-      .map((c) => (typeof c === 'number' ? c : byClass.get(c) ?? (Number(c) || null)))
-      .filter((id) => id && id !== it.id && state.items.has(id));
-    delete it.rawComponents;
-  }
+  const { heroes, heroById, items } = await loadShared();
+  state.heroes = heroes; state.heroById = heroById; state.items = items;
 }
 
 // Unranked games have no rank badge, so a rank filter would silently drop all of them.
@@ -295,7 +229,41 @@ async function renderBuild() {
     <ol class="steps">${build.path.map(pathRow).join('')}</ol>
     <p class="hint">Times are when players usually buy each item. With the match timer running, your next buy is highlighted.</p></div>` : '';
 
-  el.innerHTML = (statsError ? `<p class="warn">Couldn't load item stats (${esc(statsError.message)}). Showing counter items only. Try again in a minute.</p>` : '')
+  // Your own saved builds for this hero
+  const mine = buildsFor(me.id);
+  const pick = store.get('useBuild', {})[me.id] || 'suggested';
+  const chosen = mine.find((b) => b.id === pick);
+  const picker = `<div class="mybuild-pick">
+      <label for="use-build">Build</label>
+      <select id="use-build">
+        <option value="suggested" ${chosen ? '' : 'selected'}>Suggested for this match</option>
+        ${mine.map((b) => `<option value="${esc(b.id)}" ${chosen?.id === b.id ? 'selected' : ''}>My build: ${esc(b.name)}</option>`).join('')}
+      </select>
+      <a class="btn" href="builds.html">${mine.length ? 'Edit my builds' : 'Make your own build'}</a>
+    </div>`;
+
+  if (chosen) {
+    const w = walkBuild(chosen.items, state.items);
+    const threats = threatProfile(enemies);
+    const missing = missingCounters(chosen.items, threats, state.items);
+    const rows = w.steps.map((s, i) => pathRow({ ...s, at: null, reasons: [] }, i)).join('');
+    el.innerHTML = picker
+      + (missing.length ? `<div class="warn"><b>Against this lineup your build has no answer to:</b><ul class="miss">${missing.map((m) =>
+        `<li>${esc(m.label)} from ${esc(m.names.join(', '))}. Try ${esc(m.suggest.join(', '))}.</li>`).join('')}</ul></div>`
+        : enemies.length ? '<p class="status good">Your build has an answer to everything 2 or more enemies bring.</p>' : '')
+      + `<div class="stage path"><h3>${esc(chosen.name)}<small>${w.slots} of 12 slots · ${w.total.toLocaleString()} souls</small></h3>
+         ${rows ? `<ol class="steps">${rows}</ol>` : '<p class="empty-note">This build has no items yet. Add some on the My builds page.</p>'}</div>`
+      + '<h3 class="more-h">Suggested items for this match</h3>'
+      + stage('Early', 'Tier 1 and 2 · lane', build.stages.early)
+      + stage('Core', 'Tier 3 · mid game', build.stages.core)
+      + stage('Late', 'Tier 4 · when you have the souls', build.stages.late)
+      + (build.situational.length ? stage('Swap in if needed', 'Other answers to this lineup', build.situational) : '');
+    $('build-meta').textContent = `Your build · ${w.total.toLocaleString()} souls`;
+    renderMatchups();
+    return;
+  }
+
+  el.innerHTML = picker + (statsError ? `<p class="warn">Couldn't load item stats (${esc(statsError.message)}). Showing counter items only. Try again in a minute.</p>` : '')
     + (!statsError && !build.hasStats ? `<p class="warn">No recent games for ${esc(me.name)} with these filters. Try Ranked + unranked.</p>` : '')
     + pathHtml
     + (build.path.length ? '<h3 class="more-h">Other strong items</h3>' : '')
@@ -416,6 +384,11 @@ function wire() {
   $('rank').value = state.rank;
   $('mode').value = state.matchMode;
   $('style').value = state.style;
+  $('build').addEventListener('change', (e) => {
+    if (e.target.id !== 'use-build') return;
+    const use = store.get('useBuild', {}); use[state.me] = e.target.value; store.set('useBuild', use);
+    renderBuild();
+  });
   $('style').addEventListener('change', (e) => { state.style = e.target.value; store.set('style', state.style); renderBuild(); });
   $('rank').addEventListener('change', (e) => { state.rank = e.target.value; store.set('rank', state.rank); syncFilters(); renderBuild(); });
   $('mode').addEventListener('change', (e) => { state.matchMode = e.target.value; store.set('matchMode', state.matchMode); syncFilters(); renderBuild(); });
@@ -433,7 +406,6 @@ function wire() {
 }
 
 async function boot() {
-  try { ['cb.c.items', 'cb.c.heroes'].forEach((k) => localStorage.removeItem(k)); } catch {} // old cache copies
   initTimer();
   wire();
   $('build').innerHTML = '<p class="empty-note">Loading heroes and items…</p>';
@@ -449,56 +421,14 @@ async function boot() {
 }
 
 // ---------- hover card ----------
-const tip = document.createElement('div');
-tip.className = 'tip'; tip.setAttribute('role', 'tooltip'); tip.hidden = true;
-document.body.appendChild(tip);
-let tipFor = null;
-
-function tipHtml(it) {
-  const info = it.info || {};
-  const kind = { weapon: 'Weapon', vitality: 'Vitality', spirit: 'Spirit' }[it.slot] || '';
-  const s = state.stats.get(`${state.me}|${filterKey()}`)?.find?.((r) => Number(r.item_id) === it.id);
-  const m = s ? Number(s.matches ?? (Number(s.wins) + Number(s.losses))) : 0;
-  return `<div class="tip-head s-${esc(it.slot)}">
-      ${it.img ? `<img src="${esc(it.img)}" alt="">` : ''}
-      <div><b>${esc(it.name)}</b><span>${kind} · Tier ${it.tier} · ${it.cost.toLocaleString()} souls</span></div>
-    </div>
-    <div class="tip-tags"><span>${info.active ? 'Active' : 'Passive'}</span>${info.cooldown ? `<span>Cooldown ${esc(info.cooldown)}</span>` : ''}
-      ${m ? `<span>${(s.wins / m * 100).toFixed(1)}% win rate · ${m.toLocaleString()} games</span>` : ''}</div>
-    ${info.stats?.length ? `<dl class="tip-stats">${info.stats.map((x) => `<dt>${esc(x.label)}</dt><dd>${esc(x.value)}</dd>`).join('')}</dl>` : ''}
-    ${info.desc ? `<p class="tip-desc">${esc(info.desc)}</p>` : ''}
-    ${!info.stats?.length && !info.desc ? '<p class="tip-desc">No details in the game data for this item.</p>' : ''}`;
-}
-
-function showTip(el) {
-  const it = state.items.get(Number(el.dataset.item));
-  if (!it) return;
-  tipFor = el;
-  tip.innerHTML = tipHtml(it);
-  tip.hidden = false;
-  const r = el.getBoundingClientRect(), w = tip.offsetWidth, h = tip.offsetHeight;
-  const vw = document.documentElement.clientWidth, vh = window.innerHeight;
-  let left = Math.min(Math.max(8, r.left + 12), vw - w - 8);
-  let top = r.bottom + 6;
-  if (top + h > vh - 8) top = Math.max(8, r.top - h - 6);
-  tip.style.left = left + 'px'; tip.style.top = top + 'px';
-}
-function hideTip() { tip.hidden = true; tipFor = null; }
-
-document.addEventListener('pointerover', (e) => {
-  if (e.pointerType === 'touch') return;
-  const el = e.target.closest('[data-item]');
-  if (el && el !== tipFor) showTip(el);
-  else if (!el && !e.target.closest('.tip')) hideTip();
+initItemTips({
+  getItem: (id) => state.items.get(id),
+  extra: (it) => {
+    const s = state.stats.get(`${state.me}|${filterKey()}`)?.find?.((r) => Number(r.item_id) === it.id);
+    const m = s ? Number(s.matches ?? (Number(s.wins) + Number(s.losses))) : 0;
+    return m ? `<span>${(s.wins / m * 100).toFixed(1)}% win rate · ${m.toLocaleString()} games</span>` : '';
+  },
 });
-document.addEventListener('click', (e) => { // tap on phones
-  const el = e.target.closest('[data-item]');
-  if (el) { el === tipFor && !tip.hidden ? hideTip() : showTip(el); }
-  else if (!e.target.closest('.tip')) hideTip();
-});
-document.addEventListener('focusin', (e) => { const el = e.target.closest?.('[data-item]'); if (el) showTip(el); });
-document.addEventListener('keydown', (e) => { if (e.key === 'Escape') hideTip(); });
-document.addEventListener('scroll', hideTip, true);
 
 // Highlight the next thing to buy, following the match timer.
 setInterval(() => {

@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Counterbuild · My builds</title>
+<meta name="theme-color" content="#10171a">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body class="page-build page-builds">
+<header class="top">
+  <div class="brand">
+    <span class="mark" aria-hidden="true"></span>
+    <h1>Counterbuild</h1>
+  </div>
+  <nav class="pages" aria-label="Pages">
+    <a href="./">Build &amp; timer</a>
+    <a href="builds.html" aria-current="page">My builds</a>
+    <a href="stats.html">My stats</a>
+  </nav>
+</header>
+
+<main>
+<div class="view split-left">
+  <section class="panel" aria-labelledby="hero-h">
+    <h2 id="hero-h">Hero</h2>
+    <div class="hero-row">
+      <span id="b-face"></span>
+      <label class="sr" for="b-hero">Hero</label>
+      <select id="b-hero"></select>
+    </div>
+    <div class="saved" id="b-saved"></div>
+  </section>
+
+  <section class="panel" aria-labelledby="b-h">
+    <div class="build-head">
+      <h2 id="b-h">Your build</h2>
+      <span class="meta" id="b-meta"></span>
+    </div>
+    <div class="name-row">
+      <label for="b-name">Name</label>
+      <input id="b-name" maxlength="40" autocomplete="off" placeholder="Build name">
+    </div>
+    <div class="mix" id="b-mix" aria-label="Item types in the finished build"></div>
+    <ol class="steps edit" id="b-steps"></ol>
+    <p class="empty-note" id="b-empty">Tap items in the shop to add them in the order you buy them.</p>
+    <div class="b-actions">
+      <button class="btn" id="b-suggest" type="button">Fill with suggested build</button>
+      <button class="btn" id="b-clear" type="button">Clear items</button>
+      <button class="btn" id="b-dupe" type="button">Copy build</button>
+      <button class="btn danger" id="b-delete" type="button">Delete build</button>
+    </div>
+    <p class="status" id="b-status">Saves automatically on this device.</p>
+  </section>
+</div>
+
+<aside class="view split-right" aria-label="Shop">
+  <section class="panel shop" aria-labelledby="shop-h">
+    <h2 id="shop-h">Shop</h2>
+    <div class="shop-filters">
+      <div class="seg" role="group" aria-label="Item type" id="f-slot">
+        <button data-slot="all" aria-pressed="true">All</button>
+        <button data-slot="weapon" class="f-weapon" aria-pressed="false">Weapon</button>
+        <button data-slot="vitality" class="f-vitality" aria-pressed="false">Vitality</button>
+        <button data-slot="spirit" class="f-spirit" aria-pressed="false">Spirit</button>
+      </div>
+      <label class="sr" for="f-search">Search items</label>
+      <input id="f-search" type="search" placeholder="Search items" autocomplete="off">
+    </div>
+    <div id="shop-list"></div>
+    <p class="hint">Hover an item to read it. Tap to add it to your build. On a phone, tap <b>i</b> for details.</p>
+  </section>
+</aside>
+</main>
+
+<script type="module" src="builds-page.js"></script>
+</body>
+</html>
