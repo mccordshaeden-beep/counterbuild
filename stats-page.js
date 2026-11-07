@@ -111,7 +111,7 @@ async function runCoach(count) {
     ${failed ? `<p class="hint">${failed} match${failed > 1 ? 'es' : ''} couldn't be loaded and ${failed > 1 ? 'were' : 'was'} skipped.</p>` : ''}`;
 }
 
-async function load() {
+async function load(fresh = false) {
   const acc = parseSteam($('steam').value);
   if (!acc) { $('id-status').textContent = 'Paste your Steam profile link or the 7656… number from Steam → Account details.'; $('id-status').className = 'status bad'; return; }
   store.set('steam', $('steam').value.trim());
@@ -119,7 +119,7 @@ async function load() {
   account = acc;
   $('coach-body').innerHTML = '<p class="empty-note">Loading your matches…</p>';
   lastSummary = await loadMyStats(acc, {
-    heroById, face, el: $('me-body'),
+    heroById, face, el: $('me-body'), fresh,
     onPickHero: (id) => { store.set('me', id); location.href = './'; },
   });
   if (!lastSummary) { $('coach-body').innerHTML = '<p class="empty-note">Coaching needs your match history first.</p>'; return; }
@@ -130,6 +130,11 @@ async function boot() {
   $('steam').value = store.get('steam', '');
   $('id-form').addEventListener('submit', (e) => { e.preventDefault(); load(); });
   $('coach-more').addEventListener('click', () => runCoach(20));
+  $('me-fresh').addEventListener('click', async () => {
+    const b = $('me-fresh');
+    b.disabled = true; b.textContent = 'Checking…';
+    try { await load(true); } finally { b.disabled = false; b.textContent = 'Check for new matches'; }
+  });
   heroById = await loadHeroes();
   if (parseSteam($('steam').value)) load();
 }

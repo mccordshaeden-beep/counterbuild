@@ -324,3 +324,5 @@ b.bad { color: var(--bad); }
 .tip-card .ev { margin-top: 6px; color: var(--muted); font-size: 13px; font-family: var(--mono); }
 #coach-more { margin-top: 12px; }
 @media (max-width: 480px) { .cmp { grid-template-columns: 1fr auto; } .cmp-bars { grid-column: 1 / -1; grid-row: 2; } .pages { margin-left: 0; } }
+
+.fresh-note { margin: 0 0 4px; }

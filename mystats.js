@@ -3,9 +3,9 @@ const API = 'https://api.deadlock-api.com';
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const num = (x) => (Number.isFinite(Number(x)) ? Number(x) : 0);
 
-async function getJSON(url) {
+async function getJSON(url, ms = 20000) {
   const ctl = new AbortController();
-  const t = setTimeout(() => ctl.abort(), 20000);
+  const t = setTimeout(() => ctl.abort(), ms);
   try {
     const r = await fetch(url, { signal: ctl.signal });
     if (!r.ok) throw new Error(r.status === 429 ? 'too many requests, try again in a minute' : `error ${r.status}`);
@@ -56,12 +56,17 @@ const ago = (unix) => {
 };
 const mmss = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
 
-export async function loadMyStats(accountId, { heroById, face, onPickHero, el }) {
-  el.innerHTML = '<p class="empty-note">Loading your matches…</p>';
-  let history, profile = null;
+export async function loadMyStats(accountId, { heroById, face, onPickHero, el, fresh = false }) {
+  el.innerHTML = `<p class="empty-note">${fresh ? 'Asking Steam for your newest matches. This can take up to a minute…' : 'Loading your matches…'}</p>`;
+  let history, profile = null, refetchFailed = false;
+  const base = `${API}/v1/players/${accountId}/match-history`;
+  // fresh: the service asks Steam directly instead of waiting for its regular update. Falls back to the normal list.
+  const historyReq = fresh
+    ? getJSON(`${base}?force_refetch=true`, 90000).catch(() => { refetchFailed = true; return getJSON(base); })
+    : getJSON(base);
   try {
     const [h, p] = await Promise.all([
-      getJSON(`${API}/v1/players/${accountId}/match-history`),
+      historyReq,
       getJSON(`${API}/v1/players/steam?account_ids=${accountId}`).catch(() => null),
     ]);
     history = Array.isArray(h) ? h : h?.matches || h?.history || [];
@@ -99,7 +104,9 @@ export async function loadMyStats(accountId, { heroById, face, onPickHero, el })
     </li>`;
   }).join('');
 
+  const newest = s.games[0];
   el.innerHTML = `
+    <p class="hint fresh-note">${refetchFailed ? 'Steam didn\'t answer, so this is the regular list. Try again in a few minutes. ' : ''}Newest match: ${ago(newest.start)}.</p>
     ${name ? `<div class="me-head">${avatar ? `<img src="${esc(avatar)}" alt="">` : ''}<b>${esc(name)}</b></div>` : ''}
     <div class="me-tiles">
       <div><span>Record</span><b>${s.all.wins}–${s.all.losses}</b><small>${s.all.games.toLocaleString()} games</small></div>
