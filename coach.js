@@ -31,6 +31,12 @@ export function extractMatch(meta, accountId) {
   const myLane = soulsAt(me, LANE_CHECK), oppLane = opp ? soulsAt(opp, LANE_CHECK) : null;
   const dmg = (p) => lastSample(p, 'player_damage');
   const lobbyDmg = players.map(dmg).filter((x) => x != null);
+  const kdaOf = (p) => (num(p.kills) + num(p.assists)) / Math.max(1, num(p.deaths));
+  const others = players.filter((p) => p !== me);
+  const teamShare = (p) => { const tk = players.filter((q) => q.team === p.team).reduce((a, q) => a + num(q.kills), 0); return tk ? (num(p.kills) + num(p.assists)) / tk : 0; };
+  const pctOf = (fn, lowIsGood) => { const v = fn(me); const xs = others.map(fn); return xs.length ? xs.filter((x) => (lowIsGood ? v < x : v > x)).length / xs.length : null; };
+  const b0 = num(info.average_badge_team0), b1 = num(info.average_badge_team1);
+  const lobbyBadge = b0 && b1 ? (b0 + b1) / 2 : b0 || b1 || 0;
   // If the match doesn't say who won, the stats page fills this in from your match history.
   const won = info.winning_team != null ? num(info.winning_team) === num(me.team) : null;
 
@@ -45,6 +51,17 @@ export function extractMatch(meta, accountId) {
     laneDiff: myLane != null && oppLane != null ? myLane - oppLane : null,
     earlyDeaths: (me.death_details || []).filter((x) => num(x.game_time_s ?? x.time_s) > 0 && num(x.game_time_s ?? x.time_s) < LANE_CHECK).length,
     dmg: dmg(me), lobbyDmg: lobbyDmg.length ? avg(lobbyDmg) : null,
+    lobbyBadge,
+    // Share of the other 11 players you beat on each stat (0 = worst in the lobby, 1 = best)
+    p: {
+      farm: pctOf((p) => num(p.net_worth)),
+      survive: pctOf((p) => num(p.deaths), true),
+      lastHits: pctOf((p) => num(p.last_hits)),
+      fight: pctOf(kdaOf),
+      damage: dmg(me) != null && lobbyDmg.length > 6 ? pctOf((p) => dmg(p) ?? 0) : null,
+      teamplay: pctOf(teamShare),
+    },
+    laneAhead: myLane != null && oppLane != null ? myLane > oppLane : null,
   };
 }
 
@@ -136,4 +153,46 @@ export function coach(matches, heroCount = null) {
   const order = { fix: 0, work: 1, good: 2 };
   tips.sort((a, b) => order[a.level] - order[b.level]);
   return { tips, n, numbers: { d, ld, s, ls, lh, llh, part, lane, early } };
+}
+
+// ---------- rank guess ----------
+// What each stat means, and what to do when it's low.
+export const AREAS = {
+  farm:     { name: 'Farming', what: 'Souls collected', fix: 'Last-hit every creep and secure the orb, clear camps between waves, and break crates on the way.' },
+  survive:  { name: 'Staying alive', what: 'Fewest deaths', fix: 'Stay behind your frontline, keep an escape ready, and back off when enemies go missing from the map.' },
+  lastHits: { name: 'Last hits', what: 'Creeps and camps last-hit', fix: 'Melee low creeps; it is faster than shooting. Practice a few minutes in the sandbox before you queue.' },
+  fight:    { name: 'Fighting', what: 'Kills and assists per death', fix: 'Take fights you can win: your team nearby, enemies low or out of position. Leave bad fights early.' },
+  damage:   { name: 'Damage', what: 'Damage to heroes', fix: 'Stay in fights from a safe distance and check your build has enough damage for your hero.' },
+  teamplay: { name: 'Teamplay', what: 'Share of your team\'s kills you helped with', fix: 'After pushing your wave, rotate to fights and objectives, especially the urn and Mid Boss.' },
+  lane:     { name: 'Laning', what: 'Ahead of your lane opponent at 10:00', fix: 'Focus on last hits before trades and only trade when the enemy walks up for a creep.' },
+};
+
+const flatOf = (badge) => Math.floor(badge / 10) * 6 + Math.max(0, Math.round(badge % 10) - 1);
+
+/**
+ * matches: output of extractMatch. Returns null when no match has lobby ranks.
+ * -> { flat, lobbyFlat, perf, n, areas: [{ key, score (0..1), n, level }], confidence }
+ */
+export function estimateRank(matches, winRate = null) {
+  const ms = matches.filter((m) => m && m.p);
+  const ranked = ms.filter((m) => m.lobbyBadge > 0);
+  const areas = Object.keys(AREAS).map((key) => {
+    const xs = key === 'lane'
+      ? ms.map((m) => (m.laneAhead == null ? null : m.laneAhead ? 1 : 0)).filter((x) => x != null)
+      : ms.map((m) => m.p[key]).filter((x) => x != null);
+    const score = xs.length ? avg(xs) : null;
+    return { key, score, n: xs.length, level: score == null ? null : score >= 0.6 ? 'strong' : score <= 0.42 ? 'weak' : 'ok' };
+  }).filter((a) => a.n >= 3);
+  if (!ranked.length || !areas.length) return { flat: null, areas, n: ms.length };
+
+  const lobbyFlat = avg(ranked.map((m) => flatOf(m.lobbyBadge)));
+  // Overall performance: average of your areas, laning counts half since it's one moment of the game.
+  const weights = { lane: 0.5 };
+  const wsum = areas.reduce((a, x) => a + (weights[x.key] ?? 1), 0);
+  const perf = areas.reduce((a, x) => a + x.score * (weights[x.key] ?? 1), 0) / wsum;
+  // Playing like the average player in your lobbies = your lobby rank. Each 10 points above
+  // average is worth about two steps; winning more than you lose adds a little on top.
+  const shift = Math.max(-12, Math.min(12, (perf - 0.5) * 20 + (winRate == null ? 0 : (winRate - 0.5) * 10)));
+  const n = ranked.length;
+  return { flat: lobbyFlat + shift, lobbyFlat, perf, shift, n, areas, confidence: n >= 15 ? 'good' : n >= 8 ? 'fair' : 'low' };
 }

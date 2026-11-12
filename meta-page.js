@@ -1,6 +1,6 @@
 import { loadAssets, store, getJSON, cached, API } from './assets.js';
 import { initItemTips } from './itemtip.js';
-import { tierList, matchups, movers, itemTable, latestPatch } from './meta.js';
+import { tierList, matchups, movers, latestPatch } from './meta.js';
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -14,8 +14,7 @@ const S = {
   mode: store.get('matchMode', 'Ranked,Unranked'),
   rank: store.get('rank', 'all'),
   muHero: store.get('me', null),
-  iwHero: 'all', iwSlot: 'all', iwTier: 0, iwSort: 'vsTier', iwDir: -1,
-  heroWr: new Map(), counters: null, tiers: [], itemRows: [], totalPlayerGames: 0,
+  heroWr: new Map(), counters: null, tiers: [], totalPlayerGames: 0,
 };
 
 const face = (h, cls = '') => (!h ? '<span class="face empty" aria-hidden="true"></span>'
@@ -77,32 +76,6 @@ async function renderMatchups() {
     <p class="hint">Numbers are win-rate points better (+) or worse (−) than expected. Small print: actual lane win rate · games.</p>`;
 }
 
-// ---------- items ----------
-async function renderItems() {
-  const el = $('iw');
-  el.innerHTML = '<p class="empty-note">Loading items…</p>';
-  const hero = S.iwHero === 'all' ? '' : `hero_id=${S.iwHero}&`;
-  try { S.itemRows = await load(`is${S.iwHero}`, `${API}/v1/analytics/item-stats?${hero}${q()}`); }
-  catch (e) { el.innerHTML = `<p class="warn">Couldn't load item stats (${esc(e.message)}).</p>`; return; }
-  drawItems();
-}
-
-function drawItems() {
-  const heroGames = S.iwHero === 'all' ? S.totalPlayerGames : S.tiers.find((r) => r.hero === Number(S.iwHero))?.matches;
-  let list = itemTable(S.itemRows, A.items, heroGames)
-    .filter((r) => { const it = A.items.get(r.id); return (S.iwSlot === 'all' || it.slot === S.iwSlot) && (!S.iwTier || it.tier === S.iwTier); });
-  const key = { name: (r) => A.items.get(r.id).name, wr: (r) => r.wr, vsTier: (r) => r.vsTier, buy: (r) => r.buy, matches: (r) => r.matches }[S.iwSort];
-  list.sort((a, b) => { const x = key(a), y = key(b); return (typeof x === 'string' ? x.localeCompare(y) : x - y) * S.iwDir; });
-  if (!list.length) { $('iw').innerHTML = '<p class="empty-note">No items with enough games.</p>'; return; }
-  const th = (k, label) => `<th><button data-sort="${k}" class="${S.iwSort === k ? 'on' : ''}">${label}${S.iwSort === k ? (S.iwDir < 0 ? ' ↓' : ' ↑') : ''}</button></th>`;
-  $('iw').innerHTML = `<div class="table-wrap"><table class="iw-table">
-    <thead><tr>${th('name', 'Item')}${th('wr', 'Win')}${th('vsTier', 'Vs tier')}${th('buy', 'Bought')}${th('matches', 'Games')}</tr></thead>
-    <tbody>${list.slice(0, 80).map((r) => { const it = A.items.get(r.id); return `<tr>
-      <td><span class="iw-item s-${esc(it.slot)}" data-item="${it.id}" tabindex="0">${it.img ? `<img src="${esc(it.img)}" alt="">` : ''}<span>${esc(it.name)}</span><small>T${it.tier}</small></span></td>
-      <td>${pct(r.wr)}</td><td class="${r.vsTier >= 0 ? 'good' : 'bad'}">${pts(r.vsTier)}</td>
-      <td>${pct(r.buy, 0)}</td><td>${r.matches.toLocaleString()}</td></tr>`; }).join('')}</tbody></table></div>`;
-}
-
 // ---------- patch movers ----------
 async function renderMovers() {
   const hEl = $('hero-movers'), iEl = $('item-movers');
@@ -145,7 +118,7 @@ async function renderMovers() {
 async function reloadAll() {
   S.counters = null;
   await renderTiers();
-  renderMatchups(); renderItems(); renderMovers();
+  renderMatchups(); renderMovers();
 }
 
 function wire() {
@@ -160,19 +133,6 @@ function wire() {
     $('mu-h').scrollIntoView({ behavior: 'smooth', block: 'start' });
   });
   $('mu-hero').addEventListener('change', (e) => { S.muHero = Number(e.target.value); renderMatchups(); });
-  $('iw-hero').addEventListener('change', (e) => { S.iwHero = e.target.value; renderItems(); });
-  const seg = (id, attr, set) => $(id).addEventListener('click', (e) => {
-    const b = e.target.closest(`[data-${attr}]`); if (!b) return;
-    $(id).querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', x === b));
-    set(b.dataset[attr]); drawItems();
-  });
-  seg('iw-slot', 'slot', (v) => { S.iwSlot = v; });
-  seg('iw-tier', 'tier', (v) => { S.iwTier = Number(v); });
-  $('iw').addEventListener('click', (e) => {
-    const b = e.target.closest('[data-sort]'); if (!b) return;
-    const k = b.dataset.sort;
-    S.iwDir = S.iwSort === k ? -S.iwDir : (k === 'name' ? 1 : -1); S.iwSort = k; drawItems();
-  });
 }
 
 async function boot() {
@@ -183,7 +143,6 @@ async function boot() {
   }
   const opts = A.heroes.map((h) => `<option value="${h.id}">${esc(h.name)}</option>`).join('');
   $('mu-hero').innerHTML = opts;
-  $('iw-hero').innerHTML = '<option value="all">All heroes</option>' + opts;
   if (!A.heroById.has(S.muHero)) S.muHero = A.heroes[0]?.id;
   $('mu-hero').value = String(S.muHero);
   initItemTips({ getItem: (id) => A.items.get(id) });

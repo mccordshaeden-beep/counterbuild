@@ -1,5 +1,6 @@
 import { loadMyStats, rankName } from './mystats.js';
-import { extractMatch, coach } from './coach.js';
+import { extractMatch, coach, estimateRank, AREAS } from './coach.js';
+import { rankName as rName, setRankNames, initRankTips, fromFlat, flat as flatOf } from './ranks.js';
 import { parseSteam } from './engine.js';
 
 const API = 'https://api.deadlock-api.com';
@@ -46,7 +47,7 @@ let account = null;
 
 // Each match's coaching numbers never change, so keep them once worked out.
 async function matchNumbers(id, acc) {
-  const key = `cm.${acc}.${id}`;
+  const key = `cm2.${acc}.${id}`; // v2 adds lobby rank and per-stat standing
   const hit = store.get(key, undefined);
   if (hit !== undefined) return hit;
   const meta = await getJSON(`${API}/v1/matches/${id}/metadata`);
@@ -96,7 +97,8 @@ async function runCoach(count) {
       <span class="cmp-v"><b>${fmt(you)}</b><small>lobby ${fmt(them)}</small></span></div>`;
   };
   const r0 = (x) => Math.round(x).toLocaleString(), r1 = (x) => x.toFixed(1);
-  body.innerHTML = `
+  body.innerHTML = guessHtml(estimateRank(results, lastSummary.all.wr)) + `
+    <h3 class="me-sub">You vs the average player in your games</h3>
     <div class="cmp-wrap">
       <p class="cmp-key"><span><i class="you good"></i>You</span><span><i class="them"></i>Average player in your games</span></p>
       ${bar('Deaths a game', nb.d, nb.ld, r1, true)}
@@ -111,6 +113,47 @@ async function runCoach(count) {
       <p class="ev">${esc(t.evidence)}</p></li>`).join('')}</ol>`
     : '<p class="empty-note">Nothing stands out. You\'re close to the average player in your games on deaths, souls and last hits.</p>'}
     ${failed ? `<p class="hint">${failed} match${failed > 1 ? 'es' : ''} couldn't be loaded and ${failed > 1 ? 'were' : 'was'} skipped.</p>` : ''}`;
+}
+
+// ---------- rank guess ----------
+function guessHtml(g) {
+  if (!g || !g.areas?.length) return '';
+  const current = lastSummary?.ranked?.length ? lastSummary.ranked[lastSummary.ranked.length - 1].badge : 0;
+  let head = '';
+  if (g.flat != null) {
+    const guess = fromFlat(g.flat);
+    const diff = current ? Math.round(g.flat - flatOf(current)) : null;
+    const verdict = diff == null ? 'Play some ranked games to compare this with your real rank.'
+      : diff >= 3 ? `That's ${diff} steps above your rank. Keep playing like this and you should climb.`
+      : diff <= -3 ? `That's ${-diff} steps below your rank. Work on the areas below to hold your rank and climb again.`
+      : "That's right around your rank. Improve the weak areas below to start climbing.";
+    head = `<div class="guess">
+      <div class="guess-main"><span>You play like</span>
+        <b class="rank-link" data-rank="${guess}" tabindex="0">${esc(rName(guess))}</b></div>
+      <dl class="guess-facts">
+        ${current ? `<div><dt>Your rank</dt><dd><span class="rank-link" data-rank="${current}" tabindex="0">${esc(rName(current))}</span></dd></div>` : ''}
+        <div><dt>Your lobbies</dt><dd><span class="rank-link" data-rank="${fromFlat(g.lobbyFlat)}" tabindex="0">${esc(rName(fromFlat(g.lobbyFlat)))}</span></dd></div>
+        <div><dt>Vs your lobbies</dt><dd class="${g.perf >= 0.5 ? 'good' : 'bad'}">better than ${Math.round(g.perf * 100)}%</dd></div>
+      </dl>
+      <p>${verdict}</p>
+      <p class="hint">A guess from ${g.n} match${g.n > 1 ? 'es' : ''}${g.confidence === 'low' ? ', so treat it loosely. Look at 20 games for a better guess' : ''}. It starts at the average rank of your lobbies and moves up or down by how you did against those players, and a little by your win rate.</p>
+    </div>`;
+  }
+  const order = { weak: 0, ok: 1, strong: 2 };
+  const areas = [...g.areas].sort((a, b) => order[a.level] - order[b.level] || a.score - b.score);
+  const row = (a) => {
+    const A = AREAS[a.key];
+    const pctTxt = a.key === 'lane' ? `ahead in ${Math.round(a.score * 100)}% of lanes` : `better than ${Math.round(a.score * 100)}% of players`;
+    return `<li class="area lv-${a.level}">
+      <div class="area-top"><b>${A.name}</b><span class="area-lvl">${a.level === 'strong' ? 'Strong' : a.level === 'weak' ? 'Improve' : 'Average'}</span></div>
+      <div class="area-bar" aria-hidden="true"><i style="width:${Math.round(a.score * 100)}%"></i><em></em></div>
+      <p class="area-note">${A.what}: ${pctTxt}.</p>
+      ${a.level === 'weak' ? `<p class="area-fix">${esc(A.fix)}</p>` : ''}
+    </li>`;
+  };
+  return `<h3 class="me-sub">Your rank guess</h3>${head}
+    <h3 class="me-sub">Strengths and what to improve <small>vs the players in your games</small></h3>
+    <ul class="areas">${areas.map(row).join('')}</ul>`;
 }
 
 async function loadRanks() {
@@ -128,6 +171,7 @@ async function loadRanks() {
 const pct = (x) => (x == null ? '—' : (x * 100).toFixed(1) + '%');
 function compareTable(me, them, theirName) {
   const nowRank = (s) => s?.ranked?.length ? rankName(s.ranked[s.ranked.length - 1].badge, ranks) : '—';
+  const badgeOf = (s) => (s?.ranked?.length ? s.ranked[s.ranked.length - 1].badge : 0);
   const top = (s) => s?.mastery?.slice(0, 3).map((h) => heroById.get(h.hero)?.name).filter(Boolean).join(', ') || '—';
   const rows = [
     ['Rank', nowRank(me), nowRank(them), null],
@@ -146,7 +190,9 @@ function compareTable(me, them, theirName) {
   };
   return `<div class="table-wrap"><table class="cmp-table">
     <thead><tr><th></th><th>You</th><th>${esc(theirName)}</th></tr></thead>
-    <tbody>${rows.map(([l, a, b, c]) => `<tr><th>${l}</th><td class="${cls(c, 'me')}">${esc(a)}</td><td class="${cls(c, 'them')}">${esc(b)}</td></tr>`).join('')}</tbody>
+    <tbody>${rows.map(([l, a, b, c]) => l === 'Rank'
+      ? `<tr><th>${l}</th><td><span class="rank-link" data-rank="${badgeOf(me)}" tabindex="0">${esc(a)}</span></td><td><span class="rank-link" data-rank="${badgeOf(them)}" tabindex="0">${esc(b)}</span></td></tr>`
+      : `<tr><th>${l}</th><td class="${cls(c, 'me')}">${esc(a)}</td><td class="${cls(c, 'them')}">${esc(b)}</td></tr>`).join('')}</tbody>
   </table></div>`;
 }
 
@@ -221,6 +267,8 @@ async function boot() {
   syncBtn(); setInterval(syncBtn, 30000);
   heroById = await loadHeroes();
   ranks = await loadRanks();
+  setRankNames(ranks);
+  initRankTips();
   wireLookup();
   if (parseSteam($('steam').value)) load();
 }

@@ -1,4 +1,5 @@
 // "My stats": your public match history from the Deadlock data service, by Steam ID.
+import { rankName as rName } from './ranks.js';
 const API = 'https://api.deadlock-api.com';
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const num = (x) => (Number.isFinite(Number(x)) ? Number(x) : 0);
@@ -61,12 +62,8 @@ export function summarize(history) {
   return { all: sum(games), recent: sum(games.slice(0, 20)), heroes, mastery, ranked, games };
 }
 
-export const rankName = (badge, ranks) => {
-  if (!badge) return 'Unranked';
-  const tier = Math.floor(badge / 10), sub = badge % 10;
-  const r = (ranks || []).find((x) => Number(x.tier) === tier);
-  return `${r?.name || `Tier ${tier}`}${sub ? ` ${sub}` : ''}`;
-};
+// Names come from ranks.js (updated from the game data when it loads)
+export const rankName = (badge) => rName(badge);
 
 function rankChart(ranked, ranks) {
   if (ranked.length < 2) return '';
@@ -158,7 +155,7 @@ export async function loadMyStats(accountId, { heroById, face, onPickHero, el, f
   const first20 = s.ranked[Math.max(0, s.ranked.length - 21)];
   const moved = nowRank && first20 ? nowRank.flat - first20.flat : 0;
   const rankBlock = nowRank ? `<h3 class="me-sub">Rank over time <small>last ${Math.min(60, s.ranked.length)} ranked games</small></h3>
-    <div class="rank-now"><b>${esc(rankName(nowRank.badge, ranks))}</b>
+    <div class="rank-now"><b class="rank-link" data-rank="${nowRank.badge}" tabindex="0">${esc(rankName(nowRank.badge, ranks))}</b>
       <span class="${moved > 0 ? 'good' : moved < 0 ? 'bad' : ''}">${moved > 0 ? `up ${moved} step${moved > 1 ? 's' : ''}` : moved < 0 ? `down ${-moved} step${moved < -1 ? 's' : ''}` : 'no change'} over the last ${Math.min(20, s.ranked.length - 1)} ranked games</span></div>
     ${rankChart(s.ranked, ranks)}`
     : `<h3 class="me-sub">Rank over time</h3><p class="empty-note">No ranked games with a rank shown yet.</p>`;

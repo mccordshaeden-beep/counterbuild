@@ -460,3 +460,31 @@ li.good .mu-num b, b.good { color: var(--good); } li.bad .mu-num b, b.bad { colo
 .cmp-table tbody th { text-align: left; font-weight: 400; color: var(--muted); }
 .cmp-table td { font-family: var(--mono); }
 .cmp-table td.better { color: var(--good); font-weight: 700; }
+
+/* Rank hover and rank guess */
+.rank-link { cursor: help; text-decoration: underline dotted; text-underline-offset: 3px; text-decoration-color: color-mix(in srgb, currentColor 50%, transparent); }
+.rank-ladder { display: flex; gap: 2px; height: 8px; margin: 10px 0 4px; }
+.rank-ladder i { background: var(--line); border-radius: 2px; min-width: 3px; }
+.rank-ladder i.on { background: var(--brass); }
+.guess { background: var(--raise); border: 1px solid var(--line); border-left: 4px solid var(--brass); border-radius: 8px; padding: 12px 14px; display: grid; gap: 8px; }
+.guess p { margin: 0; }
+.guess-main { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.guess-main span { color: var(--muted); font-size: 13px; }
+.guess-main b { font: 800 30px/1 var(--display); text-transform: uppercase; letter-spacing: .04em; color: var(--brass); }
+.guess-facts { display: flex; flex-wrap: wrap; gap: 6px 22px; margin: 0; }
+.guess-facts div { display: grid; }
+.guess-facts dt { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .08em; }
+.guess-facts dd { margin: 0; font-weight: 700; }
+.guess-facts dd.good { color: var(--good); } .guess-facts dd.bad { color: var(--bad); }
+.areas { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.area { background: var(--raise); border: 1px solid var(--line); border-left: 4px solid var(--muted); border-radius: 8px; padding: 10px 12px; display: grid; gap: 6px; }
+.area.lv-strong { border-left-color: var(--good); } .area.lv-weak { border-left-color: var(--bad); }
+.area-top { display: flex; justify-content: space-between; gap: 10px; }
+.area-lvl { font-size: 11px; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); }
+.lv-strong .area-lvl { color: var(--good); } .lv-weak .area-lvl { color: var(--bad); }
+.area-bar { position: relative; height: 8px; background: var(--bg); border-radius: 4px; overflow: hidden; }
+.area-bar i { position: absolute; inset: 0 auto 0 0; background: var(--muted); border-radius: 4px; }
+.lv-strong .area-bar i { background: var(--good); } .lv-weak .area-bar i { background: var(--bad); }
+.area-bar em { position: absolute; left: 50%; top: 0; bottom: 0; width: 2px; background: var(--fg); opacity: .5; }
+.area-note { margin: 0; font-size: 13px; color: var(--muted); }
+.area-fix { margin: 0; font-size: 14px; }

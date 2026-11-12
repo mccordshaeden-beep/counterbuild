@@ -36,7 +36,8 @@
     <label class="rank"><span>Rank</span>
       <select id="rank">
         <option value="all">All ranks</option>
-        <option value="51">Ritualist+</option>
+        <option value="61">Ritualist+</option>
+        <option value="81">Oracle+</option>
         <option value="91">Phantom+</option>
         <option value="111">Eternus</option>
       </select>
@@ -65,37 +66,15 @@
     <p class="hint">Only games where the two heroes laned against each other. Each matchup is compared with what both heroes' overall win rates predict, so a strong enemy doesn't look like a counter just for being strong.</p>
   </section>
 
+</div>
+
+<aside class="view split-right" aria-label="Patch movers">
   <section class="panel" aria-labelledby="hm-h">
     <div class="build-head">
       <h2 id="hm-h">Hero patch movers</h2>
       <span class="meta" id="patch-meta"></span>
     </div>
     <div id="hero-movers"><p class="empty-note">Loading…</p></div>
-  </section>
-</div>
-
-<aside class="view split-right" aria-label="Items">
-  <section class="panel" aria-labelledby="iw-h">
-    <h2 id="iw-h">Item win rates</h2>
-    <div class="shop-filters">
-      <label class="sr" for="iw-hero">Hero</label>
-      <select id="iw-hero"><option value="all">All heroes</option></select>
-      <div class="seg" role="group" aria-label="Item type" id="iw-slot">
-        <button data-slot="all" aria-pressed="true">All</button>
-        <button data-slot="weapon" class="f-weapon" aria-pressed="false">Weapon</button>
-        <button data-slot="vitality" class="f-vitality" aria-pressed="false">Vitality</button>
-        <button data-slot="spirit" class="f-spirit" aria-pressed="false">Spirit</button>
-      </div>
-      <div class="seg" role="group" aria-label="Tier" id="iw-tier">
-        <button data-tier="0" aria-pressed="true">All</button>
-        <button data-tier="1" aria-pressed="false">T1</button>
-        <button data-tier="2" aria-pressed="false">T2</button>
-        <button data-tier="3" aria-pressed="false">T3</button>
-        <button data-tier="4" aria-pressed="false">T4</button>
-      </div>
-    </div>
-    <div id="iw"><p class="empty-note">Loading items…</p></div>
-    <p class="hint">Last 14 days. "Vs tier" compares an item with the average item of the same tier, since late items win more just because the players buying them are ahead. Tap a column to sort.</p>
   </section>
 
   <section class="panel" aria-labelledby="im-h">
