@@ -58,31 +58,51 @@ async function matchNumbers(id, acc) {
 
 const LEVEL = { fix: 'Fix first', work: 'Work on', good: 'Keep doing' };
 
-async function runCoach(count) {
+let coachRun = 0;
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const coachCount = () => { const v = $('coach-count').value; return v === 'all' ? Infinity : Number(v); };
+
+async function runCoach() {
   const body = $('coach-body');
   if (!lastSummary || !account) return;
-  const games = lastSummary.games.slice(0, count);
+  const run = ++coachRun; // a newer pick cancels this one
+  const want = coachCount();
+  const games = lastSummary.games.slice(0, want);
   const results = [];
-  let done = 0, failed = 0, limited = false;
-  const show = () => { body.innerHTML = `<p class="empty-note">Looking at match ${Math.min(done + 1, games.length)} of ${games.length}…</p>`; };
+  let done = 0, failed = 0, pauses = 0, waiting = false, gaveUp = false;
+  const saved = games.filter((g) => store.get(`cm2.${account}.${g.id}`, undefined) !== undefined).length;
+  const show = () => {
+    if (run !== coachRun) return;
+    body.innerHTML = `<p class="empty-note">${waiting ? 'The stats service asked us to slow down. Waiting a few seconds, then carrying on…' : `Looking at match ${Math.min(done + 1, games.length)} of ${games.length}…`}
+      ${saved ? ` <span class="hint">(${saved} saved from before)</span>` : ''}</p>
+      <div class="progress" aria-hidden="true"><i style="width:${Math.round((done / Math.max(1, games.length)) * 100)}%"></i></div>`;
+  };
   show();
   const queue = [...games];
   async function worker() {
-    while (queue.length && !limited) {
+    while (queue.length && !gaveUp && run === coachRun) {
       const g = queue.shift();
       try {
         const m = await matchNumbers(g.id, account);
         if (m) { if (m.won == null) m.won = g.won; results.push(m); }
-      } catch (e) { failed++; if (e.status === 429) limited = true; }
-      done++; show();
+        done++;
+      } catch (e) {
+        if (e.status === 429 && pauses < 6) { // wait it out and try the same match again
+          queue.unshift(g); pauses++; waiting = true; show();
+          await sleep(15000); waiting = false;
+        } else { if (e.status === 429) gaveUp = true; failed++; done++; }
+      }
+      show();
     }
   }
   await Promise.all([worker(), worker()]);
+  if (run !== coachRun) return;
+  const limited = gaveUp;
+  const skipped = games.length - results.length;
 
   const heroCount = new Set(lastSummary.games.slice(0, 20).map((g) => g.hero)).size;
   const c = coach(results, heroCount);
-  $('coach-meta').textContent = `${results.length} matches looked at`;
-  $('coach-more').hidden = count >= 20 || lastSummary.games.length <= count;
+  $('coach-meta').textContent = `${results.length} of ${games.length} matches`;
 
   if (c.n < 3) {
     body.innerHTML = `<p class="warn">Couldn't get enough match details to coach you (${results.length} of ${games.length}). ${limited ? 'The stats service asked us to slow down. Try again in a minute.' : 'Try again later.'}</p>`;
@@ -112,7 +132,7 @@ async function runCoach(count) {
       <p>${esc(t.body)}</p>
       <p class="ev">${esc(t.evidence)}</p></li>`).join('')}</ol>`
     : '<p class="empty-note">Nothing stands out. You\'re close to the average player in your games on deaths, souls and last hits.</p>'}
-    ${failed ? `<p class="hint">${failed} match${failed > 1 ? 'es' : ''} couldn't be loaded and ${failed > 1 ? 'were' : 'was'} skipped.</p>` : ''}`;
+    ${skipped ? `<p class="hint">${skipped} match${skipped > 1 ? 'es' : ''} couldn't be used${limited ? ' because the stats service is busy. Pick the same option again in a minute to fill them in' : ' (still processing, too short, or details missing)'}.</p>` : ''}`;
 }
 
 // ---------- rank guess ----------
@@ -136,7 +156,7 @@ function guessHtml(g) {
         <div><dt>Vs your lobbies</dt><dd class="${g.perf >= 0.5 ? 'good' : 'bad'}">better than ${Math.round(g.perf * 100)}%</dd></div>
       </dl>
       <p>${verdict}</p>
-      <p class="hint">A guess from ${g.n} match${g.n > 1 ? 'es' : ''}${g.confidence === 'low' ? ', so treat it loosely. Look at 20 games for a better guess' : ''}. It starts at the average rank of your lobbies and moves up or down by how you did against those players, and a little by your win rate.</p>
+      <p class="hint">A guess from ${g.n} match${g.n > 1 ? 'es' : ''}${g.confidence === 'low' ? ', so treat it loosely. Pick more games above for a better guess' : ''}. It starts at the average rank of your lobbies and moves up or down by how you did against those players, and a little by your win rate.</p>
     </div>`;
   }
   const order = { weak: 0, ok: 1, strong: 2 };
@@ -243,13 +263,17 @@ async function load(fresh = false) {
     onPickHero: (id) => { store.set('me', id); location.href = './'; },
   });
   if (!lastSummary) { $('coach-body').innerHTML = '<p class="empty-note">Coaching needs your match history first.</p>'; return; }
-  await runCoach(10);
+  const all = $('coach-count').querySelector('[value="all"]');
+  if (all) all.textContent = `All available (${lastSummary.games.length})`;
+  await runCoach();
 }
 
 async function boot() {
   $('steam').value = store.get('steam', '');
   $('id-form').addEventListener('submit', (e) => { e.preventDefault(); load(); });
-  $('coach-more').addEventListener('click', () => runCoach(20));
+  $('coach-count').value = String(store.get('coachCount', '20'));
+  if (!$('coach-count').value) $('coach-count').value = '20';
+  $('coach-count').addEventListener('change', (e) => { store.set('coachCount', e.target.value); runCoach(); });
   // The service allows one Steam check per hour from each connection, so the button waits out the hour.
   const HOUR = 3600e3;
   const syncBtn = () => {

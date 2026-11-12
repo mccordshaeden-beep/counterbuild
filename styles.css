@@ -322,7 +322,6 @@ b.bad { color: var(--bad); }
 .tip-card h3 { font: 800 19px/1.1 var(--display); text-transform: uppercase; letter-spacing: .05em; margin: 4px 0 6px; }
 .tip-card p { margin: 0; max-width: 65ch; }
 .tip-card .ev { margin-top: 6px; color: var(--muted); font-size: 13px; font-family: var(--mono); }
-#coach-more { margin-top: 12px; }
 @media (max-width: 480px) { .cmp { grid-template-columns: 1fr auto; } .cmp-bars { grid-column: 1 / -1; grid-row: 2; } .pages { margin-left: 0; } }
 
 .fresh-note { margin: 0 0 4px; }
@@ -488,3 +487,9 @@ li.good .mu-num b, b.good { color: var(--good); } li.bad .mu-num b, b.bad { colo
 .area-bar em { position: absolute; left: 50%; top: 0; bottom: 0; width: 2px; background: var(--fg); opacity: .5; }
 .area-note { margin: 0; font-size: 13px; color: var(--muted); }
 .area-fix { margin: 0; font-size: 14px; }
+
+.coach-pick { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 4px; font-size: 13px; color: var(--muted); }
+.coach-pick select { color: var(--fg); font-weight: 700; }
+.progress { height: 6px; background: var(--bg); border-radius: 3px; overflow: hidden; margin-top: 8px; }
+.progress i { display: block; height: 100%; background: var(--brass); transition: width .2s; }
+@media (prefers-reduced-motion: reduce) { .progress i { transition: none; } }

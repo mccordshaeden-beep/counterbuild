@@ -55,9 +55,20 @@
       <h2 id="coach-h">How to get better</h2>
       <span class="meta" id="coach-meta"></span>
     </div>
-    <p class="hint">Based on your recent matches, comparing you with the other 11 players in each game and with your lane opponent at 10:00.</p>
+    <div class="coach-pick">
+      <label for="coach-count">Games to look at</label>
+      <select id="coach-count">
+        <option value="5">Last 5</option>
+        <option value="10">Last 10</option>
+        <option value="20">Last 20</option>
+        <option value="30">Last 30</option>
+        <option value="50">Last 50</option>
+        <option value="all">All available</option>
+      </select>
+    </div>
+    <p class="hint">Compares you with the other 11 players in each game and with your lane opponent at 10:00. More games gives a steadier picture. Each match downloads once and is saved, so big picks get quick after the first time.</p>
     <div id="coach-body"><p class="empty-note">Load your stats to get coaching.</p></div>
-    <button class="btn" id="coach-more" type="button" hidden>Look at 20 games instead</button>
+
   </section>
 
   <footer class="foot">
