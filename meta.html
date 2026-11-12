@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Counterbuild · Meta</title>
+<meta name="theme-color" content="#10171a">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body class="page-build page-meta">
+<header class="top">
+  <div class="brand">
+    <span class="mark" aria-hidden="true"></span>
+    <h1>Counterbuild</h1>
+  </div>
+  <nav class="pages" aria-label="Pages">
+    <a href="./">Build &amp; timer</a>
+    <a href="builds.html">My builds</a>
+    <a href="meta.html" aria-current="page">Meta</a>
+    <a href="stats.html">My stats</a>
+  </nav>
+  <div class="filters">
+    <label class="rank"><span>Games</span>
+      <select id="mode">
+        <option value="Ranked,Unranked">Ranked + unranked</option>
+        <option value="Ranked">Ranked</option>
+        <option value="Unranked">Unranked</option>
+      </select>
+    </label>
+    <label class="rank"><span>Rank</span>
+      <select id="rank">
+        <option value="all">All ranks</option>
+        <option value="51">Ritualist+</option>
+        <option value="91">Phantom+</option>
+        <option value="111">Eternus</option>
+      </select>
+    </label>
+  </div>
+</header>
+
+<main>
+<div class="view split-left">
+  <section class="panel" aria-labelledby="tier-h">
+    <div class="build-head">
+      <h2 id="tier-h">Hero tier list</h2>
+      <span class="meta" id="tier-meta"></span>
+    </div>
+    <div id="tiers"><p class="empty-note">Loading heroes…</p></div>
+    <p class="hint">Last 14 days. Tiers rank heroes by win rate, with heroes that have few games pulled toward 50%. Tap a hero for its lane matchups.</p>
+  </section>
+
+  <section class="panel" aria-labelledby="mu-h">
+    <div class="build-head">
+      <h2 id="mu-h">Lane matchups</h2>
+      <label class="sr" for="mu-hero">Hero</label>
+      <select id="mu-hero"></select>
+    </div>
+    <div id="mu"><p class="empty-note">Pick a hero.</p></div>
+    <p class="hint">Only games where the two heroes laned against each other. Each matchup is compared with what both heroes' overall win rates predict, so a strong enemy doesn't look like a counter just for being strong.</p>
+  </section>
+
+  <section class="panel" aria-labelledby="hm-h">
+    <div class="build-head">
+      <h2 id="hm-h">Hero patch movers</h2>
+      <span class="meta" id="patch-meta"></span>
+    </div>
+    <div id="hero-movers"><p class="empty-note">Loading…</p></div>
+  </section>
+</div>
+
+<aside class="view split-right" aria-label="Items">
+  <section class="panel" aria-labelledby="iw-h">
+    <h2 id="iw-h">Item win rates</h2>
+    <div class="shop-filters">
+      <label class="sr" for="iw-hero">Hero</label>
+      <select id="iw-hero"><option value="all">All heroes</option></select>
+      <div class="seg" role="group" aria-label="Item type" id="iw-slot">
+        <button data-slot="all" aria-pressed="true">All</button>
+        <button data-slot="weapon" class="f-weapon" aria-pressed="false">Weapon</button>
+        <button data-slot="vitality" class="f-vitality" aria-pressed="false">Vitality</button>
+        <button data-slot="spirit" class="f-spirit" aria-pressed="false">Spirit</button>
+      </div>
+      <div class="seg" role="group" aria-label="Tier" id="iw-tier">
+        <button data-tier="0" aria-pressed="true">All</button>
+        <button data-tier="1" aria-pressed="false">T1</button>
+        <button data-tier="2" aria-pressed="false">T2</button>
+        <button data-tier="3" aria-pressed="false">T3</button>
+        <button data-tier="4" aria-pressed="false">T4</button>
+      </div>
+    </div>
+    <div id="iw"><p class="empty-note">Loading items…</p></div>
+    <p class="hint">Last 14 days. "Vs tier" compares an item with the average item of the same tier, since late items win more just because the players buying them are ahead. Tap a column to sort.</p>
+  </section>
+
+  <section class="panel" aria-labelledby="im-h">
+    <h2 id="im-h">Item patch movers</h2>
+    <div id="item-movers"><p class="empty-note">Loading…</p></div>
+  </section>
+
+  <footer class="foot">
+    Data from <a href="https://deadlock-api.com" target="_blank" rel="noopener">deadlock-api.com</a>, a community project not affiliated with Valve.
+  </footer>
+</aside>
+</main>
+
+<script type="module" src="meta-page.js"></script>
+</body>
+</html>

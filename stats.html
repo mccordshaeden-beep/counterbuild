@@ -22,6 +22,7 @@
   <nav class="pages" aria-label="Pages">
     <a href="./">Build &amp; timer</a>
     <a href="builds.html">My builds</a>
+    <a href="meta.html">Meta</a>
     <a href="stats.html" aria-current="page">My stats</a>
   </nav>
 </header>
@@ -36,6 +37,17 @@
       <button type="submit" class="btn primary">Load my stats</button>
     </form>
     <p class="status" id="id-status">Saved on this device, shared with the Build page.</p>
+  </section>
+
+  <section class="panel" aria-labelledby="lk-h">
+    <h2 id="lk-h">Look up a player</h2>
+    <form id="lk-form" class="live-row">
+      <label class="sr" for="lk-id">Their Steam profile link or ID</label>
+      <input id="lk-id" inputmode="numeric" autocomplete="off" placeholder="A friend's Steam profile link or ID">
+      <button type="submit" class="btn">Look up</button>
+    </form>
+    <div id="lk-recent" class="chips lk-recent"></div>
+    <div id="lk-body"></div>
   </section>
 
   <section class="panel coach" aria-labelledby="coach-h">
@@ -57,6 +69,7 @@
   <section class="panel mystats" aria-labelledby="me-h">
     <div class="build-head">
       <h2 id="me-h">My stats</h2>
+      <button class="btn" id="me-back" type="button" hidden>Back to my stats</button>
       <button class="btn" id="me-fresh" type="button">Check for new matches</button>
     </div>
     <div id="me-body"><p class="empty-note">Load your stats on the left.</p></div>
