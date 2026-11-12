@@ -493,3 +493,21 @@ li.good .mu-num b, b.good { color: var(--good); } li.bad .mu-num b, b.bad { colo
 .progress { height: 6px; background: var(--bg); border-radius: 3px; overflow: hidden; margin-top: 8px; }
 .progress i { display: block; height: 100%; background: var(--brass); transition: width .2s; }
 @media (prefers-reduced-motion: reduce) { .progress i { transition: none; } }
+
+/* Match timer alert settings */
+.alert-settings { margin-top: 12px; border-top: 1px solid var(--line); padding-top: 10px; }
+.alert-settings summary { cursor: pointer; font-weight: 700; color: var(--brass); }
+.as-grid { display: grid; gap: 8px; margin-top: 10px; }
+.as-row { display: grid; grid-template-columns: 76px minmax(0, 1fr) auto; gap: 10px; align-items: center; font-size: 13px; }
+.as-row > span { color: var(--muted); }
+.as-row select { min-width: 0; width: 100%; color: var(--fg); }
+.as-row:has(select) { grid-template-columns: 76px minmax(0, 1fr); }
+.as-row input[type="range"] { width: 100%; accent-color: var(--brass); }
+.as-row output { font: 500 13px var(--mono); min-width: 44px; text-align: right; font-variant-numeric: tabular-nums; }
+.as-row .btn { justify-self: start; grid-column: 2; }
+.as-head { display: flex; justify-content: space-between; align-items: baseline; margin: 14px 0 6px; font-size: 13px; }
+.link-btn { background: none; border: 0; padding: 0; color: var(--brass); text-decoration: underline; font-size: 13px; }
+.as-groups { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 6px 14px; font-size: 14px; }
+.as-groups label { display: flex; gap: 8px; align-items: center; }
+.as-groups input { accent-color: var(--brass); width: 18px; height: 18px; flex: none; }
+.ev.muted { opacity: .5; }

@@ -135,6 +135,30 @@
       <label><input type="checkbox" id="t-voice"> Spoken alerts</label>
       <label><input type="checkbox" id="t-awake"> Keep screen on</label>
     </div>
+    <details class="alert-settings">
+      <summary>Alert settings</summary>
+      <div class="as-grid">
+        <label class="as-row" for="t-voice-pick"><span>Voice</span>
+          <select id="t-voice-pick"><option value="">Browser default</option></select></label>
+        <label class="as-row" for="t-volume"><span>Volume</span>
+          <input type="range" id="t-volume" min="0" max="100" step="5"><output id="t-volume-out">80%</output></label>
+        <label class="as-row" for="t-rate"><span>Speed</span>
+          <input type="range" id="t-rate" min="0.7" max="1.6" step="0.1"><output id="t-rate-out">1.1×</output></label>
+        <label class="as-row" for="t-warn"><span>Warn me</span>
+          <select id="t-warn">
+            <option value="15">15 seconds before</option>
+            <option value="30">30 seconds before</option>
+            <option value="45">45 seconds before</option>
+            <option value="60">1 minute before</option>
+            <option value="0">Only when it's up</option>
+          </select></label>
+        <div class="as-row"><span></span><button class="btn" type="button" id="t-test">Test the voice</button></div>
+      </div>
+      <div class="as-head"><b>Tell me about</b>
+        <span><button class="link-btn" type="button" id="t-all-on">All</button> · <button class="link-btn" type="button" id="t-all-off">None</button></span></div>
+      <div class="as-groups" id="t-alerts"></div>
+      <p class="hint">Voices come from your device, so the list is different on your phone and your PC. Volume is also limited by your device volume.</p>
+    </details>
   </section>
 
   <section class="panel" aria-labelledby="t-now-h">

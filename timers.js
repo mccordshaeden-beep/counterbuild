@@ -6,43 +6,57 @@ export const PATCH_NOTE = 'Timings from the October 2026 game version. A patch c
 
 // Spawns on the match clock. `every` repeats on a fixed schedule.
 export const EVENTS = [
-  { id: 'small',   name: 'Small camps',        kind: 'camp',   first: 120,
+  { id: 'small', group: 'camps',   name: 'Small camps',        kind: 'camp',   first: 120,
     tip: 'Clear them when your wave is pushed. They come back about 1:25 after you clear them.' },
-  { id: 'snacks',  name: 'Healing snacks',     kind: 'heal',   first: 150,
+  { id: 'snacks', group: 'snacks',  name: 'Healing snacks',     kind: 'heal',   first: 150,
     tip: 'Free healing on the map. Back again 3:00 after pickup.' },
-  { id: 'crates',  name: 'Crates',             kind: 'souls',  first: 180,
+  { id: 'crates', group: 'crates',  name: 'Crates',             kind: 'souls',  first: 180,
     tip: 'Break the ones on your path. Each comes back 3:00 after it breaks.' },
-  { id: 'medium',  name: 'Medium camps',       kind: 'camp',   first: 300,
+  { id: 'medium', group: 'camps',  name: 'Medium camps',       kind: 'camp',   first: 300,
     tip: 'Farm them when your lane is safe. Back about 4:50 after you clear them.' },
-  { id: 'tunnel',  name: 'Tunnel, Bell Tower & Sunken Plaza crates', kind: 'souls', first: 300,
+  { id: 'tunnel', group: 'crates',  name: 'Tunnel, Bell Tower & Sunken Plaza crates', kind: 'souls', first: 300,
     tip: 'Worth a bit more than regular crates.' },
-  { id: 'bridge',  name: 'Bridge powerups',    kind: 'buff',   first: 300, every: 300,
+  { id: 'bridge', group: 'bridge',  name: 'Bridge powerups',    kind: 'buff',   first: 300, every: 300,
     tip: 'Grab one when you rotate between lanes. Stat buff, no souls.' },
-  { id: 'large',   name: 'Large camps',        kind: 'camp',   first: 480,
+  { id: 'large', group: 'camps',   name: 'Large camps',        kind: 'camp',   first: 480,
     tip: 'Big souls. Take them when the enemy can\'t punish you. Back about 5:35 after clear.' },
-  { id: 'sinner',  name: 'Sinner\'s Sacrifice', kind: 'buff',  first: 480,
+  { id: 'sinner', group: 'sinner',  name: 'Sinner\'s Sacrifice', kind: 'buff',  first: 480,
     tip: 'Permanent stat buffs for some health. Be there when it opens.' },
-  { id: 'urn',     name: 'Soul Urn',           kind: 'obj',    first: 600, every: 300,
+  { id: 'urn', group: 'urn',     name: 'Soul Urn',           kind: 'obj',    first: 600, every: 300,
     tip: 'Huge team souls. Group up to escort or steal it. It can be late while the last urn is still being carried.' },
-  { id: 'rift',    name: 'Unstable Rift window', kind: 'obj',  first: 600,
+  { id: 'rift', group: 'rift',    name: 'Unstable Rift window', kind: 'obj',  first: 600,
     tip: 'Opens between 10:00 and 12:00. Watch for the reveal about 80 seconds early.' },
-  { id: 'bosscrates', name: 'Mid Boss room crates', kind: 'souls', first: 600,
+  { id: 'bosscrates', group: 'crates', name: 'Mid Boss room crates', kind: 'souls', first: 600,
     tip: 'Under Times Square. Back 3:00 after they break.' },
-  { id: 'waves25', name: 'Creep waves speed up', kind: 'info', first: 1200,
+  { id: 'waves25', group: 'waves', name: 'Creep waves speed up', kind: 'info', first: 1200,
     tip: 'Waves now every 25 seconds. Keep lanes pushed while you group.' },
-  { id: 'waves20', name: 'Creep waves speed up again', kind: 'info', first: 2100,
+  { id: 'waves20', group: 'waves', name: 'Creep waves speed up again', kind: 'info', first: 2100,
     tip: 'Waves now every 20 seconds.' },
 ];
 
 // Timers you start by tapping, because they depend on when something happened.
 export const TAP_TIMERS = [
-  { id: 'boss',   name: 'Mid Boss', button: 'Mid Boss killed',
+  { id: 'boss', group: 'boss',   name: 'Mid Boss', button: 'Mid Boss killed',
     respawn: (n) => [420, 360, 300][Math.min(n, 3) - 1],
     tip: 'Respawns 7:00 after the first kill, 6:00 after the second, 5:00 after that.' },
-  { id: 'sinner', name: 'Sinner\'s Sacrifice', button: 'Sinner\'s used',
+  { id: 'sinner', group: 'sinner', name: 'Sinner\'s Sacrifice', button: 'Sinner\'s used',
     respawn: () => 300, tip: 'Back about 5:00 after it is fully used.' },
-  { id: 'rift',   name: 'Next Rift (earliest)', button: 'Rift taken',
+  { id: 'rift', group: 'rift',   name: 'Next Rift (earliest)', button: 'Rift taken',
     respawn: () => 360, tip: 'The next Rift comes about 6 to 8 minutes later.' },
+];
+
+// What you can turn alerts on or off for, in the order shown in Alert settings.
+export const ALERT_GROUPS = [
+  { id: 'camps',  label: 'Jungle camps' },
+  { id: 'crates', label: 'Crates (boxes)' },
+  { id: 'urn',    label: 'Soul Urn' },
+  { id: 'boss',   label: 'Mid Boss respawn' },
+  { id: 'rift',   label: 'Unstable Rift' },
+  { id: 'sinner', label: 'Sinner\'s Sacrifice' },
+  { id: 'bridge', label: 'Bridge powerups' },
+  { id: 'snacks', label: 'Healing snacks' },
+  { id: 'waves',  label: 'Creep waves speed up' },
+  { id: 'phase',  label: 'Phase changes' },
 ];
 
 // General advice by stage of the match.
